@@ -1,0 +1,13 @@
+{
+    "name": "flamsteed"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+    "jasmine-node": "latest"
+    , "jsdom": "latest"
+    , "coffee-script": "latest"
+  },
+  "scripts": {
+    "test" : "jasmine-node --forceexit --coffee spec/javascripts"
+  }
+}
