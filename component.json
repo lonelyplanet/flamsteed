@@ -1,0 +1,6 @@
+{
+    "name": "flamsteed"
+  , "version": "0.0.1"
+  , "main": "./lib/javascripts/flamsteed.js"
+  , "dependencies": {}
+}
