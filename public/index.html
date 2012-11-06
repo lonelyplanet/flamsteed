@@ -1,0 +1,34 @@
+<html>
+  
+  <head>
+    <title>Test page</title>
+    <script type="text/javascript">
+      myFlam = {buffer: [], log : function(x){this.buffer.push({event: x, timestamp: new Date().getTime()})}};
+    </script>
+  </head>
+
+  <body>
+
+
+
+    <h1>We're in</h1>
+
+    <script type="text/javascript">
+      myFlam.log('Our header has loaded')
+    </script>
+
+
+    <script type="text/javascript" src="../lib/javascripts/flamsteed.js"></script>
+    <script type="text/javascript">
+      var myFlam = new _FS({}, myFlam.buffer);
+    </script>
+
+
+
+    <script type="text/javascript">
+      myFlam.log('So has our footer')
+    </script>
+
+
+  </body>
+</html>
