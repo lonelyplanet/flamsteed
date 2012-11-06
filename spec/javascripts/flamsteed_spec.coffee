@@ -1,178 +1,184 @@
 spec_helper = require("./support/spec_helper")
 
 describe "_FS", ()->
-        fs   = undefined
-        
-        data             = { some: "data" }
-        url              = "url"
-        log_max_interval = "log max interval"
-        
-
-        beforeEach ()->
-                fs = new window._FS({
-                        url: url
-                        log_max_interval: log_max_interval
-                })
-
-        it "has an URL", ()->
-                expect(fs.url).toEqual("url")
-
-        describe "constructor", ()->
-                beforeEach ()->
-                        spyOn(fs, "emptyBuffer")
-                        spyOn(fs, "resetTimer")
-
-                it "empties the message buffer", ()->
-                        fs.constructor()
-                        expect(fs.emptyBuffer).toHaveBeenCalled()
-
-                it "starts the timer", ()->
-                        fs.constructor()
-                        expect(fs.resetTimer).toHaveBeenCalled()
+  fs   = undefined
+  
+  data             = { some: "data" }
+  url              = "url"
+  log_max_interval = "log max interval"
 
 
-        describe "log", ()->
-                
-                beforeEach ()->
-                        spyOn(fs, "flushIfFull")
-                        
-                it "pushes the data onto the buffer", ()->
-                        fs.log(data)
-                        expect(fs.buffer).toContain(data)
+  beforeEach ()->
+    fs = new window._FS({
+      url: url
+      log_max_interval: log_max_interval
+    })
 
-                it "calls flushIfFull", ()->
-                        fs.log()
-                        expect(fs.flushIfFull).toHaveBeenCalled()
+  it "has an URL", ()->
+    expect(fs.url).toEqual("url")
 
-        describe "flushIfFull", ()->
-                beforeEach ()->
-                        spyOn(fs, "flush")
-                        fs.buffer = [data]
+  describe "constructor", ()->
+    beforeEach ()->
+      spyOn(fs, "emptyBuffer")
+      spyOn(fs, "resetTimer")
 
-                describe "when the buffer is greater or equal to log_max_size", ()->
-                        beforeEach ()->
-                                fs.log_max_size = fs.buffer.length
+    it "empties the message buffer", ()->
+      fs.constructor()
+      expect(fs.emptyBuffer).toHaveBeenCalled()
 
-                        it "flushes the buffer", ()->
-                                fs.flushIfFull()
-                                expect(fs.flush).toHaveBeenCalled()
+    it "starts the timer", ()->
+      fs.constructor()
+      expect(fs.resetTimer).toHaveBeenCalled()
 
-                describe "when the buffer is less than log_max_size", ()->
-                        beforeEach ()->
-                                fs.log_max_size = fs.buffer.length + 1
 
-                        it "flushes the buffer", ()->
-                                fs.flushIfFull()
-                                expect(fs.flush).not.toHaveBeenCalled()
+  describe "log", ()->
 
-                                                
-        describe "flushIfEnough", ()->
-                beforeEach ()->
-                        spyOn(fs, "flush")
-                        fs.buffer = [data]
+    beforeEach ()->
+      spyOn(fs, "flushIfFull")
 
-                describe "when the buffer is greater or equal to log_min_size", ()->
-                        beforeEach ()->
-                                fs.log_min_size = fs.buffer.length
+    it "pushes the data onto the buffer", ()->
+      fs.log(data)
+      expect(fs.buffer).toContain(data)
 
-                        it "flushes the buffer", ()->
-                                fs.flushIfEnough()
-                                expect(fs.flush).toHaveBeenCalled()
+    it "calls flushIfFull", ()->
+      fs.log()
+      expect(fs.flushIfFull).toHaveBeenCalled()
 
-                describe "when the buffer is less than log_min_size", ()->
-                        beforeEach ()->
-                                fs.log_min_size = fs.buffer.length + 1
 
-                        it "flushes the buffer", ()->
-                                fs.flushIfEnough()
-                                expect(fs.flush).not.toHaveBeenCalled()
+  describe "flushIfFull", ()->
 
-        describe "flush", ()->
-                beforeEach ()->
-                        fs.buffer = [data]
-                        spyOn(fs, "resetTimer")
-                        spyOn(fs, "sendData")
-                        spyOn(fs, "emptyBuffer")
+    beforeEach ()->
+      spyOn(fs, "flush")
+      fs.buffer = [data]
 
-                describe "when already flushing", ()->
-                        beforeEach ()->
-                                fs.flushing = true
+    describe "when the buffer is greater or equal to log_max_size", ()->
+      beforeEach ()->
+        fs.log_max_size = fs.buffer.length
 
-                        it "does not send any data", ()->
-                                fs.flush()
-                                expect(fs.sendData).not.toHaveBeenCalled()
+      it "flushes the buffer", ()->
+        fs.flushIfFull()
+        expect(fs.flush).toHaveBeenCalled()
 
-                describe "when not already flushing", ()->
-                        it "resets the timer", ()->
-                                fs.flush()
-                                expect(fs.resetTimer).toHaveBeenCalled()
-                        
-                        it "calls sendData with the contents of the buffer", ()->
-                                contents_of_buffer = fs.buffer
-                                fs.flush()
-                                expect(fs.sendData).toHaveBeenCalledWith(contents_of_buffer)
+    describe "when the buffer is less than log_max_size", ()->
+      beforeEach ()->
+        fs.log_max_size = fs.buffer.length + 1
 
-                        it "empties the buffer", ()->
-                                fs.flush()
-                                expect(fs.emptyBuffer).toHaveBeenCalled()
-                                
-        describe "sendData", ()->
-                xhr = new Object({
-                        open: ()->
-                        send: ()->        
-                })
-                # xhr = undefined
-                
-                beforeEach ()->
-                        spyOn(window, "XMLHttpRequest").andReturn(xhr)
-                        # FIXME: xhr = createSpyObj("xhr", ["open", "send"])
-                        spyOn(xhr, "open")
-                        spyOn(xhr, "send")
-                                
-                describe "when there is data to send", ()->
-                        it "sends data as JSON to url and does not wait for response", ()->
-                                fs.sendData([data])
-                                expect(xhr.open).toHaveBeenCalledWith("post", url, true)
-                                expect(xhr.send).toHaveBeenCalledWith(url, JSON.stringify([data]))
-                        
-        describe "resetTimer", ()->
-                timeout  = "timeout"
-                interval = "interval"
-                bound_start_poll = "bound_start_poll"
-                
-                beforeEach ()->
-                        fs.timeout          = timeout
-                        fs.interval         = interval
-                        fs.log_max_interval = log_max_interval
-                        spyOn(window, "clearInterval")
-                        spyOn(window, "clearTimeout")                        
-                        spyOn(window, "setTimeout")
-                        spyOn(fs.startPoll, "bind").andReturn(bound_start_poll)
+      it "flushes the buffer", ()->
+        fs.flushIfFull()
+        expect(fs.flush).not.toHaveBeenCalled()
 
-                it "clears the interval and timeout", ()->
-                        fs.resetTimer()
-                        expect(window.clearInterval).toHaveBeenCalledWith(interval)
-                        expect(window.clearTimeout).toHaveBeenCalledWith(timeout)
 
-                it "starts polling every log_max_interval", ()->
-                        fs.resetTimer()
-                        expect(window.setTimeout).toHaveBeenCalledWith(bound_start_poll, log_max_interval)
+  describe "flushIfEnough", ()->
+    beforeEach ()->
+      spyOn(fs, "flush")
+      fs.buffer = [data]
 
-        describe "startPoll", ()->
-                bound_flush_if_enough = "bound_flush_if_enough"
-                
-                beforeEach ()->
-                        spyOn(fs.flushIfEnough, "bind").andReturn(bound_flush_if_enough)
-                        spyOn(window, "setInterval")
+    describe "when the buffer is greater or equal to log_min_size", ()->
+      beforeEach ()->
+        fs.log_min_size = fs.buffer.length
 
-                it "starts polling flushIfEnough", ()->
-                        fs.startPoll()
-                        expect(window.setInterval).toHaveBeenCalledWith(bound_flush_if_enough, log_max_interval)
+        it "flushes the buffer", ()->
+          fs.flushIfEnough()
+          expect(fs.flush).toHaveBeenCalled()
 
-        describe "emptyBuffer", ()->
-                beforeEach ()->
-                        fs.buffer = [data]
+        describe "when the buffer is less than log_min_size", ()->
+          beforeEach ()->
+            fs.log_min_size = fs.buffer.length + 1
 
-                it "empties the buffer", ()->
-                        fs.emptyBuffer()
-                        expect(fs.buffer).toEqual([])
+          it "flushes the buffer", ()->
+            fs.flushIfEnough()
+            expect(fs.flush).not.toHaveBeenCalled()
+
+
+  describe "flush", ()->
+    beforeEach ()->
+      fs.buffer = [data]
+      spyOn(fs, "resetTimer")
+      spyOn(fs, "sendData")
+      spyOn(fs, "emptyBuffer")
+
+    describe "when already flushing", ()->
+      beforeEach ()->
+        fs.flushing = true
+
+      it "does not send any data", ()->
+        fs.flush()
+        expect(fs.sendData).not.toHaveBeenCalled()
+
+      describe "when not already flushing", ()->
+        it "resets the timer", ()->
+          fs.flush()
+          expect(fs.resetTimer).toHaveBeenCalled()
+
+        it "calls sendData with the contents of the buffer", ()->
+          contents_of_buffer = fs.buffer
+          fs.flush()
+          expect(fs.sendData).toHaveBeenCalledWith(contents_of_buffer)
+
+        it "empties the buffer", ()->
+          fs.flush()
+          expect(fs.emptyBuffer).toHaveBeenCalled()
+
+
+  describe "sendData", ()->
+    xhr = new Object({
+            open: ()->
+            send: ()->
+    })
+    # xhr = undefined
+
+    beforeEach ()->
+      spyOn(window, "XMLHttpRequest").andReturn(xhr)
+      # FIXME: xhr = createSpyObj("xhr", ["open", "send"])
+      spyOn(xhr, "open")
+      spyOn(xhr, "send")
+                          
+    describe "when there is data to send", ()->
+      it "sends data as JSON to url and does not wait for response", ()->
+        fs.sendData([data])
+        expect(xhr.open).toHaveBeenCalledWith("post", url, true)
+        expect(xhr.send).toHaveBeenCalledWith(url, JSON.stringify([data]))
+
+
+  describe "resetTimer", ()->
+    timeout  = "timeout"
+    interval = "interval"
+    bound_start_poll = "bound_start_poll"
+
+    beforeEach ()->
+      fs.timeout          = timeout
+      fs.interval         = interval
+      fs.log_max_interval = log_max_interval
+      spyOn(window, "clearInterval")
+      spyOn(window, "clearTimeout")
+      spyOn(window, "setTimeout")
+      spyOn(fs.startPoll, "bind").andReturn(bound_start_poll)
+
+    it "clears the interval and timeout", ()->
+      fs.resetTimer()
+      expect(window.clearInterval).toHaveBeenCalledWith(interval)
+      expect(window.clearTimeout).toHaveBeenCalledWith(timeout)
+
+    it "starts polling every log_max_interval", ()->
+      fs.resetTimer()
+      expect(window.setTimeout).toHaveBeenCalledWith(bound_start_poll, log_max_interval)
+
+
+  describe "startPoll", ()->
+    bound_flush_if_enough = "bound_flush_if_enough"
+
+    beforeEach ()->
+      spyOn(fs.flushIfEnough, "bind").andReturn(bound_flush_if_enough)
+      spyOn(window, "setInterval")
+
+    it "starts polling flushIfEnough", ()->
+      fs.startPoll()
+      expect(window.setInterval).toHaveBeenCalledWith(bound_flush_if_enough, log_max_interval)
+
+  describe "emptyBuffer", ()->
+    beforeEach ()->
+      fs.buffer = [data]
+
+    it "empties the buffer", ()->
+      fs.emptyBuffer()
+      expect(fs.buffer).toEqual([])
