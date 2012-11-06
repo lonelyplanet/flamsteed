@@ -6,13 +6,15 @@ describe "_FS", ()->
   data             = { some: "data" }
   url              = "url"
   log_max_interval = "log max interval"
-
+  # window.performance = {timing : {performance: "data"}}
 
   beforeEach ()->
+
     fs = new window._FS({
       url: url
       log_max_interval: log_max_interval
     })
+
 
   it "has an URL", ()->
     expect(fs.url).toEqual("url")
@@ -81,13 +83,13 @@ describe "_FS", ()->
           fs.flushIfEnough()
           expect(fs.flush).toHaveBeenCalled()
 
-        describe "when the buffer is less than log_min_size", ()->
-          beforeEach ()->
-            fs.log_min_size = fs.buffer.length + 1
+    describe "when the buffer is less than log_min_size", ()->
+      beforeEach ()->
+        fs.log_min_size = fs.buffer.length + 1
 
-          it "flushes the buffer", ()->
-            fs.flushIfEnough()
-            expect(fs.flush).not.toHaveBeenCalled()
+      it "flushes the buffer", ()->
+        fs.flushIfEnough()
+        expect(fs.flush).not.toHaveBeenCalled()
 
 
   describe "flush", ()->
@@ -105,19 +107,19 @@ describe "_FS", ()->
         fs.flush()
         expect(fs.sendData).not.toHaveBeenCalled()
 
-      describe "when not already flushing", ()->
-        it "resets the timer", ()->
-          fs.flush()
-          expect(fs.resetTimer).toHaveBeenCalled()
+    describe "when not already flushing", ()->
+      it "resets the timer", ()->
+        fs.flush()
+        expect(fs.resetTimer).toHaveBeenCalled()
 
-        it "calls sendData with the contents of the buffer", ()->
-          contents_of_buffer = fs.buffer
-          fs.flush()
-          expect(fs.sendData).toHaveBeenCalledWith(contents_of_buffer)
+      it "calls sendData with the contents of the buffer", ()->
+        contents_of_buffer = fs.buffer
+        fs.flush()
+        expect(fs.sendData).toHaveBeenCalledWith(contents_of_buffer)
 
-        it "empties the buffer", ()->
-          fs.flush()
-          expect(fs.emptyBuffer).toHaveBeenCalled()
+      it "empties the buffer", ()->
+        fs.flush()
+        expect(fs.emptyBuffer).toHaveBeenCalled()
 
 
   describe "sendData", ()->
