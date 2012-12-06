@@ -31,20 +31,40 @@ describe "_FS", ()->
                         fs.constructor()
                         expect(fs.resetTimer).toHaveBeenCalled()
 
-
         describe "log", ()->
-                
-                beforeEach ()->
-                        spyOn(fs, "flushIfFull")
-                        
-                it "pushes the data onto the buffer", ()->
-                        fs.log(data)
-                        expect(fs.buffer).toContain(data)
-
-                it "calls flushIfFull", ()->
+                it "checks whether the browser is capable", ()->
+                        spyOn(fs, "isCapable")
                         fs.log()
-                        expect(fs.flushIfFull).toHaveBeenCalled()
+                        expect(fs.isCapable).toHaveBeenCalled()
+                
+                describe "when the browser is capable", ()->
+                        
+                        beforeEach ()->
+                                spyOn(fs, "isCapable").andReturn(true)
+                                spyOn(fs, "flushIfFull")
+                        
+                        it "pushes the data onto the buffer", ()->
+                                fs.log(data)
+                                expect(fs.buffer).toContain(data)
 
+                        it "calls flushIfFull", ()->
+                                fs.log()
+                                expect(fs.flushIfFull).toHaveBeenCalled()
+
+                describe "when the browser is not capable", ()->
+
+                        beforeEach ()->
+                                spyOn(fs, "isCapable").andReturn(false)
+                                spyOn(fs, "flushIfFull")
+
+                        it "does not push data onto the buffer", ()->
+                                fs.log(data)
+                                expect(fs.buffer).toEqual([])
+
+                        it "does not call flushIfFull", ()->
+                                fs.log()
+                                expect(fs.flushIfFull).not.toHaveBeenCalled()
+                                
         describe "flushIfFull", ()->
                 beforeEach ()->
                         spyOn(fs, "flush")
@@ -66,7 +86,6 @@ describe "_FS", ()->
                                 fs.flushIfFull()
                                 expect(fs.flush).not.toHaveBeenCalled()
 
-                                                
         describe "flushIfEnough", ()->
                 beforeEach ()->
                         spyOn(fs, "flush")
