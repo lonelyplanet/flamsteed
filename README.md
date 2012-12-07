@@ -1,24 +1,7 @@
-# flamsteed
+# flamsteed.js
 
-flamsteed is a simple event-logging pipeline. Use it for RUM
-(real-user monitoring) and click-tracking.
-
-There are 3 components:
-
-* flamsteed.js: client-side event logger
-* TODO: flamsteed.conf: nginx conf for a flamsteed.js endpoint. It
-  supplements each incoming event with additional info, and writes to
-  a queue
-* TODO: flamsteed.rb: ruby daemon to work off the queue of events (based on Sidekiq)
-
-Requirements:
-
-* Redis
-* nginx compiled with the redis module[?]
-
-## flamsteed.js
-
-flamsteed is a tiny, speedy, and modular client-side event logger.
+flamsteed.js is a tiny, speedy, and modular client-side event logger.
+RUM is built-in.
 
 ### Usage
     
@@ -30,11 +13,29 @@ flamsteed is a tiny, speedy, and modular client-side event logger.
         some: "data"
     });
     
-flamsteed buffers logged events, and only sends logged events when
-events in buffer either:
+flamsteed buffers logged events. The buffer is only flushed back to the
+server (and logged events are sent) when:
 
-* greater or equal to `log_min_size` and `max_log_interval` has passed
-* greater or equal to `log_max_size`
+* buffer size greater or equal to `log_min_size` and `max_log_interval` has passed
+* buffer size greater or equal to `log_max_size`
+* `unload` event is triggered when the visitor navigates away from
+  the page
+
+(TODO) When flamsteed first initializes, it generates a `uuid`. The `uuid` is
+sent back with every bunch of events, so it can be used to identify
+all the events associated with a particular page impression.
+
+Each payload flushed back to the server looks like this:
+
+    {
+      uuid: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
+      timestamp: 1354880453288,
+      data: [
+        { some: "data" },
+        { other: "thing", key: "val" },
+        // snip
+      ]
+    }
     
 ### Options
 
@@ -45,6 +46,26 @@ events in buffer either:
 * `log_max_size`: threshold of number of unsent logged events to
   trigger immediately sending
 
+### RUM (TODO)
+
+There are two sources of real user monitoring data:
+
+    `window.performance.timing`
+
+    `chrome.loadTimes`
+    
+There are three events that force a flush of RUM data:
+
+    * "Operational" timings such as TTFB are sent as soon as they are ready
+    * "Business" timings such as time-to-first-lodging are sent when
+      `onload` fires
+    * Everything we have is sent when `unload` fires
+
+The benefit of this approach is that as much data is sent as possible.
+
+The downside is that, to get the full picture of a page impression,
+the server-side has to associate all the timing information using the `uuid`.
+
 ### Goals
 
 * speedy
@@ -52,10 +73,6 @@ events in buffer either:
 * modular
 
 *Wide browser compatibility is not a current goal.*
-
-#### Compatibility
-
-__TODO__
 
 ## Development
 
