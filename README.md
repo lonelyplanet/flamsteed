@@ -46,6 +46,8 @@ Each payload flushed back to the server looks like this:
 * `log_max_size`: threshold of number of unsent logged events to
   trigger immediately sending
 
+* `url`: url of server endpoint
+
 ### RUM (TODO)
 
 There are two sources of real user monitoring data:
@@ -56,10 +58,10 @@ There are two sources of real user monitoring data:
     
 There are three events that force a flush of RUM data:
 
-    * "Operational" timings such as TTFB are sent as soon as they are ready
-    * "Business" timings such as time-to-first-lodging are sent when
-      `onload` fires
-    * Everything we have is sent when `unload` fires
+* "Operational" timings such as TTFB are sent as soon as they are ready
+* "Business" timings such as time-to-first-lodging are sent when
+   `onload` fires
+* Everything we have is sent when `unload` fires
 
 The benefit of this approach is that as much data is sent as possible.
 
