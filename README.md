@@ -59,12 +59,13 @@ There are two sources of real user monitoring data:
 There are three events that force a flush of RUM data:
 
 * "Operational" timings:
-  - TTFB (time to first byte received for the main document)
-  - StartRender (time to first non empty browser canvas)
-  - DocumentReady (time to fully build the dom)
-  - OnLoad (time to fully download the last resource defined by the main document)
-* "Business" timings such as time-to-first-lodging are sent when
-   `onload` fires
+  TTFB (time to first byte received for the main document)
+  StartRender (time to first non empty browser canvas)
+  DocumentReady (time to fully build the dom)
+
+* "Business" timings such as time-to-first-lodging are sent when `onload` fires
+  OnLoad (time to fully download the last resource defined by the main document)
+
 * Everything we have is sent when `unload` fires
 
 The benefit of this approach is that as much data is sent as possible.
