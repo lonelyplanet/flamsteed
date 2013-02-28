@@ -4,7 +4,7 @@ spec_helper.setupWindow()
 describe "_FS", ()->
         fs   = undefined
         
-        data             = { some: "data" }
+        data             = {some: "data"}
         url              = "url"
         log_max_interval = "log max interval"
         
@@ -30,6 +30,23 @@ describe "_FS", ()->
                 it "starts the timer", ()->
                         fs.constructor()
                         expect(fs.resetTimer).toHaveBeenCalled()
+
+
+        describe "serialize", ->
+          it "serializes an array of objects", ->
+            stub = [
+              {
+                event: 'header'
+                timestamp: '12345'
+              },
+              {
+                event: 'footer'
+                timestamp: '23456'
+              }
+            ]
+            output = fs.serialize(stub)
+            expect(output).toEqual('event=header&timestamp=12345&event=footer&timestamp=23456')
+
 
         describe "log", ()->
                 it "checks whether the browser is capable", ()->
