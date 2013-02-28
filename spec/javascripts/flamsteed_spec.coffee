@@ -6,23 +6,26 @@ describe "_FS", ()->
         
         data             = "data"
         url              = "url"
-        imageSrc         = "www.wat.com"
         log_max_interval = "log max interval"
-        
+        serializeStub    = [{event: 'header', timestamp: '12345'},{event: 'footer', timestamp: '23456'}]
+        timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456}
+       
 
         beforeEach ()->
+                window.performance = {timing: timingStub}
                 fs = new window._FS({
                         url: url
                         log_max_interval: log_max_interval
                 })
 
         it "has an URL", ()->
-                expect(fs.url).toEqual("url")
+          expect(fs.url).toEqual("url")
 
         describe "constructor", ()->
                 beforeEach ()->
                         spyOn(fs, "emptyBuffer")
                         spyOn(fs, "resetTimer")
+                        spyOn(fs, "startRum")
 
                 it "empties the message buffer", ()->
                         fs.constructor()
@@ -32,20 +35,14 @@ describe "_FS", ()->
                         fs.constructor()
                         expect(fs.resetTimer).toHaveBeenCalled()
 
+                it "starts the rum module", ()->
+                        fs.constructor()
+                        expect(fs.startRum).toHaveBeenCalled()
+
 
         describe "serialize", ->
           it "serializes an array of objects", ->
-            stub = [
-              {
-                event: 'header'
-                timestamp: '12345'
-              },
-              {
-                event: 'footer'
-                timestamp: '23456'
-              }
-            ]
-            output = fs.serialize(stub)
+            output = fs.serialize(serializeStub)
             expect(output).toEqual('event=header&timestamp=12345&event=footer&timestamp=23456')
 
 
@@ -176,9 +173,9 @@ describe "_FS", ()->
 
         describe "sendData", ->
           it "creates a 1x1 image ", ->
-            image = fs.createImage(imageSrc, "serialized+string")
+            image = fs.createImage(url, "serialized+string")
             expect(image.length).not.toEqual(0)
-            expect(image.getAttribute('src')).toContain(imageSrc)
+            expect(image.getAttribute('src')).toContain(url)
             expect(image.getAttribute('src')).toContain("serialized+string")
 
 
@@ -192,7 +189,7 @@ describe "_FS", ()->
                         fs.interval         = interval
                         fs.log_max_interval = log_max_interval
                         spyOn(window, "clearInterval")
-                        spyOn(window, "clearTimeout")                        
+                        spyOn(window, "clearTimeout")
                         spyOn(window, "setTimeout")
                         spyOn(fs.startPoll, "bind").andReturn(bound_start_poll)
 
@@ -223,3 +220,33 @@ describe "_FS", ()->
                 it "empties the buffer", ()->
                         fs.emptyBuffer()
                         expect(fs.buffer).toEqual([])
+
+
+        describe "RUM", ()->
+          beforeEach ()->
+            spyOn(fs, "flush")
+
+          it "empties the buffer on init", ->
+            fs.startRum()
+            expect(fs.buffer.length).toEqual(2)
+            expect(fs.flush).toHaveBeenCalled()
+          
+          it "flushes the buffer on domReady", ->
+            event = document.createEvent("HTMLEvents");
+            event.initEvent("DOMContentLoaded", true, true);
+            window.dispatchEvent(event)
+            expect(fs.flush).toHaveBeenCalled()
+          
+          it "flushes the buffer on onload", ->
+            window.onload()
+            expect(fs.flush).toHaveBeenCalled()
+            
+          it "flushes the buffer on unload", ->
+            event = document.createEvent("HTMLEvents");
+            event.initEvent("beforeunload", true, true);
+            window.dispatchEvent(event)
+            expect(fs.flush).toHaveBeenCalled()
+
+
+
+
