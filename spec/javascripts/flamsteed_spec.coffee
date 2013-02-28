@@ -4,8 +4,9 @@ spec_helper.setupWindow()
 describe "_FS", ()->
         fs   = undefined
         
-        data             = {some: "data"}
+        data             = "data"
         url              = "url"
+        imageSrc         = "www.wat.com"
         log_max_interval = "log max interval"
         
 
@@ -61,8 +62,10 @@ describe "_FS", ()->
                                 spyOn(fs, "flushIfFull")
                         
                         it "pushes the data onto the buffer", ()->
+                                containing = new jasmine.Matchers.ObjectContaining({event: data});
                                 fs.log(data)
-                                expect(fs.buffer).toContain(data)
+                                expect(fs.buffer.length).toEqual(1)
+                                expect(containing.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
 
                         it "calls flushIfFull", ()->
                                 fs.log()
@@ -153,25 +156,32 @@ describe "_FS", ()->
                                 fs.flush()
                                 expect(fs.emptyBuffer).toHaveBeenCalled()
                                 
-        describe "sendData", ()->
-                xhr = new Object({
-                        open: ()->
-                        send: ()->        
-                })
-                # xhr = undefined
-                
-                beforeEach ()->
-                        spyOn(window, "XMLHttpRequest").andReturn(xhr)
-                        # FIXME: xhr = createSpyObj("xhr", ["open", "send"])
-                        spyOn(xhr, "open")
-                        spyOn(xhr, "send")
-                                
-                describe "when there is data to send", ()->
-                        it "sends data as JSON to url and does not wait for response", ()->
-                                fs.sendData([data])
-                                expect(xhr.open).toHaveBeenCalledWith("post", url, true)
-                                expect(xhr.send).toHaveBeenCalledWith(url, JSON.stringify([data]))
-                        
+        # describe "sendData", ()->
+        #         xhr = new Object({
+        #                 open: ()->
+        #                 send: ()->
+        #         })
+        #         
+        #         beforeEach ()->
+        #                 spyOn(window, "XMLHttpRequest").andReturn(xhr)
+        #                 # FIXME: xhr = createSpyObj("xhr", ["open", "send"])
+        #                 spyOn(xhr, "open")
+        #                 spyOn(xhr, "send")
+        #                         
+        #         describe "when there is data to send", ()->
+        #                 it "sends data as JSON to url and does not wait for response", ()->
+        #                         fs.sendData([data])
+        #                         expect(xhr.open).toHaveBeenCalledWith("post", url, true)
+        #                         expect(xhr.send).toHaveBeenCalledWith(url, JSON.stringify([data]))
+
+        describe "sendData", ->
+          it "creates a 1x1 image ", ->
+            image = fs.createImage(imageSrc, "serialized+string")
+            expect(image.length).not.toEqual(0)
+            expect(image.getAttribute('src')).toContain(imageSrc)
+            expect(image.getAttribute('src')).toContain("serialized+string")
+
+
         describe "resetTimer", ()->
                 timeout  = "timeout"
                 interval = "interval"
