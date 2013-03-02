@@ -3,6 +3,8 @@ source :rubygems
 gem "rack"
 gem "rack-parser", :require => "rack/parser"
 gem "curb"
+gem "foreman"
+gem "thin"
 
 group :test do
   gem "guard"
