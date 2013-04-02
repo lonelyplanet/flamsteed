@@ -25,7 +25,7 @@ describe "_FS", ()->
                 beforeEach ()->
                         spyOn(fs, "emptyBuffer")
                         spyOn(fs, "resetTimer")
-                        spyOn(fs, "startRum")
+                        spyOn(fs, "_initRum")
 
                 it "empties the message buffer", ()->
                         fs.constructor()
@@ -37,12 +37,12 @@ describe "_FS", ()->
 
                 it "starts the rum module", ()->
                         fs.constructor()
-                        expect(fs.startRum).toHaveBeenCalled()
+                        expect(fs._initRum).toHaveBeenCalled()
 
 
         describe "serialize", ->
           it "serializes an array of objects", ->
-            output = fs.serialize(serializeStub)
+            output = fs._serialize(serializeStub)
             expect(output).toEqual('event=header&timestamp=12345&event=footer&timestamp=23456')
 
 
@@ -128,7 +128,7 @@ describe "_FS", ()->
                 beforeEach ()->
                         fs.buffer = [data]
                         spyOn(fs, "resetTimer")
-                        spyOn(fs, "sendData")
+                        spyOn(fs, "_sendData")
                         spyOn(fs, "emptyBuffer")
 
                 describe "when already flushing", ()->
@@ -137,7 +137,7 @@ describe "_FS", ()->
 
                         it "does not send any data", ()->
                                 fs.flush()
-                                expect(fs.sendData).not.toHaveBeenCalled()
+                                expect(fs._sendData).not.toHaveBeenCalled()
 
                 describe "when not already flushing", ()->
                         it "resets the timer", ()->
@@ -147,7 +147,7 @@ describe "_FS", ()->
                         it "calls sendData with the contents of the buffer", ()->
                                 contents_of_buffer = fs.buffer
                                 fs.flush()
-                                expect(fs.sendData).toHaveBeenCalledWith(contents_of_buffer)
+                                expect(fs._sendData).toHaveBeenCalledWith(contents_of_buffer)
 
                         it "empties the buffer", ()->
                                 fs.flush()
@@ -173,7 +173,7 @@ describe "_FS", ()->
 
         describe "sendData", ->
           it "creates a 1x1 image ", ->
-            image = fs.createImage(url, "serialized+string")
+            image = fs._appendImage(url, "serialized+string")
             expect(image.length).not.toEqual(0)
             expect(image.getAttribute('src')).toContain(url)
             expect(image.getAttribute('src')).toContain("serialized+string")
@@ -227,7 +227,7 @@ describe "_FS", ()->
             spyOn(fs, "flush")
 
           it "empties the buffer on init", ->
-            fs.startRum()
+            fs._initRum()
             expect(fs.buffer.length).toEqual(2)
             expect(fs.flush).toHaveBeenCalled()
           
