@@ -39,28 +39,31 @@ Each payload flushed back to the server looks like this:
     
 ### Options
 
+* `debug`: print to console events logged and flushed
+* `events`: array of events to log immediately
 * `log_max_interval`: polling interval
-
 * `log_min_size`: smallest number of unsent logged events to send
+* `log_max_size`: threshold of number of unsent logged events to trigger immediately sending
+* `strategy`: either `"ajax"` (send data as JSON via Ajax POST) or
+  `"pixel"` (send data serialized as URL params in GET to tracking pixel)
+* `url`: url of AJAX endpoint or tracking pixel
 
-* `log_max_size`: threshold of number of unsent logged events to
-  trigger immediately sending
+### RUM (real user-monitoring)
 
-* `url`: url of server endpoint
+If the browser has
+[navigation timing capability](https://developer.mozilla.org/en-US/docs/Navigation_timing),
+flamsteed will automatically send performance data.
 
-### RUM (TODO)
+It uses two sources of real user monitoring data:
 
-There are two sources of real user monitoring data:
-
-    `window.performance.timing`
-
-    `chrome.loadTimes`
+* `window.performance.timing`
+* `chrome.loadTimes` (if available)
     
 There are three events that force a flush of RUM data:
 
 * "Operational" timings:
 
-    TTFB (time to first byte received for the main document)a
+    TTFB (time to first byte received for the main document)
 
     StartRender (time to first non empty browser canvas)
 
@@ -83,7 +86,14 @@ the server-side has to associate all the timing information using the `uuid`.
 * tiny
 * modular
 
-*Wide browser compatibility is not a current goal.*
+*Broad browser compatibility is not a current goal.*
+
+### Compatibility
+
+* FFX 7+
+* Chrome 7+
+* IE 9+
+* Opera 11.6+, Safari 5.x+ (No RUM)
 
 ## Development
 
@@ -97,3 +107,9 @@ One-shot test run:
 Continuous testing:
 
     $ guard
+
+## Related projects
+
+* [boomerang](http://lognormal.github.com/boomerang/doc/)
+* [piwik](http://piwik.org/)
+* [snowplow](snowplowanalytics.com)
