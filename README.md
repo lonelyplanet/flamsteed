@@ -4,13 +4,21 @@ flamsteed.js is a tiny, speedy, and modular client-side event logger.
 RUM is built-in.
 
 ### Usage
-    
+
+    // setup
     var fs = new _FS({
-      url: "http://my.flamsteed.endpoint"  
+      url: "http://f.example.com"  
     });
     
+    // log something happened
     fs.log({
         some: "data"
+    });
+    
+    // log something happened and 
+    // (roughly) when it happened
+    fs.time({
+        other: "event"
     });
     
 flamsteed buffers logged events. The buffer is only flushed back to the
@@ -21,18 +29,18 @@ server (and logged events are sent) when:
 * `unload` event is triggered when the visitor navigates away from
   the page
 
-(TODO) When flamsteed first initializes, it generates a `uuid`. The `uuid` is
+When flamsteed first initializes, it generates a `uuid`. The `uuid` is
 sent back with every bunch of events, so it can be used to identify
 all the events associated with a particular page impression.
 
 Each payload flushed back to the server looks like this:
 
     {
-      uuid: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
-      timestamp: 1354880453288,
-      data: [
+      u: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
+      t: 1354880453288,
+      d: [
         { some: "data" },
-        { other: "thing", key: "val" },
+        { other: "event", t: 132 },
         // snip
       ]
     }
@@ -50,35 +58,43 @@ Each payload flushed back to the server looks like this:
 
 ### RUM (real user-monitoring)
 
+RUM and `fs.time` is only available in browsers that are `windows.performance.timing`-capable.
+
+#### Built-in timing
+
 If the browser has
 [navigation timing capability](https://developer.mozilla.org/en-US/docs/Navigation_timing),
-flamsteed will automatically send performance data.
-
-It uses two sources of real user monitoring data:
+flamsteed will automatically collect and send performance data from
+two sources:
 
 * `window.performance.timing`
-* `chrome.loadTimes` (if available)
-    
-There are three events that force a flush of RUM data:
+* `chrome.loadTimes` (if available) (TODO: blocked by https://code.google.com/p/chromium/issues/detail?id=160547)
 
-* "Operational" timings:
+Empty timings (values equal to 0) are not sent. There will be empty
+timings, for example, if the visitor leaves before `onload` has fired.
 
-    TTFB (time to first byte received for the main document)
+To save space, timings are sent relative to `navigationStart`.
 
-    StartRender (time to first non empty browser canvas)
+#### Custom "business" timing
 
-    DocumentReady (time to fully build the dom)
+The point at which the page is usuable or ready might not line up exactly within any of the
+built-in timings. For example, you might have a whole bunch of
+components, widgets, or ads lazy-loaded after `domComplete`, but
+you're specifically interested in one of them (e.g. timeline for
+Facebook).
 
-* "Business" timings such as time-to-first-lodging are sent when `onload` fires
+flamsteed lets you time custom events, relative to the 
+`window.performance.timing.navigationStart` timestamp.
 
-    OnLoad (time to fully download the last resource defined by the main document)
+    fs.time({
+        some: "data"
+    });
 
-* Everything we have is sent when `unload` fires
-
-The benefit of this approach is that as much data is sent as possible.
-
-The downside is that, to get the full picture of a page impression,
-the server-side has to associate all the timing information using the `uuid`.
+NB: This is only as
+accurate and precise as the JS clock, which is not always accurate or
+precise. So flamsteed will discard timings that are less than 0, and
+it's advisable that you treat custom timings as benchmarks not true,
+accurate values.
 
 ### Goals
 
