@@ -1,1 +1,0 @@
-/home/dave/dev/flamsteed/lib/javascripts/flamsteed.js
