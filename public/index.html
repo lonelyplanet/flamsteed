@@ -3,7 +3,7 @@
   <head>
     <title>Test page</title>
     <script type="text/javascript">
-      myFlam = {buffer: [], log : function(x){this.buffer.push({event: x, timestamp: new Date().getTime()})}};
+      //myFlam = {buffer: [], log : function(x){this.buffer.push({event: x, timestamp: new Date().getTime()})}};
     </script>
   </head>
 
@@ -14,21 +14,19 @@
     <h1>We're in</h1>
 
     <script type="text/javascript">
-      myFlam.log('Our header has loaded')
+
     </script>
 
 
     <script type="text/javascript" src="../lib/javascripts/flamsteed.js"></script>
     <script type="text/javascript">
-      var myFlam = new _FS({}, myFlam.buffer);
+      var myFlam = new _FS({ debug: true });
     </script>
 
 
 
     <script type="text/javascript">
-      myFlam.log('So has our footer')
+      myFlam.log({msg: 'So has our footer', timestamp: window.performance.now()});
     </script>
-
-
   </body>
 </html>

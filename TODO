@@ -1,0 +1,30 @@
+* flamsteed.js
+** instantiate but blackhole everything if not capable
+** reuse timeout binding (efficiency)
+** force flush on unload
+** shorten RUM keys, values (relative to t0)
+** LP convention wrapper: event structure, naming, variants, deployment etc.
+* LP client side enrichment
+** lp cookie, lp session cookie
+*** username
+*** session id
+** variant
+** resolution/viewport/docsize
+** bandwidth
+** latency
+** timezone
+** referrer
+** event
+** LP flamsteed version
+** Browser uid??
+* LP deployment
+** environment!
+* server side ETL enrichments
+** GeoIP
+** user agent
+** timestamp
+** uuid
+** blackhole bots
+
+
+

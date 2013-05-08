@@ -4,13 +4,21 @@ flamsteed.js is a tiny, speedy, and modular client-side event logger.
 RUM is built-in.
 
 ### Usage
-    
+
+    // setup
     var fs = new _FS({
-      url: "http://my.flamsteed.endpoint"  
+      url: "http://f.example.com"  
     });
     
+    // log something happened
     fs.log({
         some: "data"
+    });
+    
+    // log something happened and 
+    // (roughly) when it happened
+    fs.time({
+        other: "event"
     });
     
 flamsteed buffers logged events. The buffer is only flushed back to the
@@ -21,61 +29,72 @@ server (and logged events are sent) when:
 * `unload` event is triggered when the visitor navigates away from
   the page
 
-(TODO) When flamsteed first initializes, it generates a `uuid`. The `uuid` is
+When flamsteed first initializes, it generates a `uuid`. The `uuid` is
 sent back with every bunch of events, so it can be used to identify
 all the events associated with a particular page impression.
 
 Each payload flushed back to the server looks like this:
 
     {
-      uuid: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
-      timestamp: 1354880453288,
-      data: [
+      u: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
+      t: 1354880453288,
+      d: [
         { some: "data" },
-        { other: "thing", key: "val" },
+        { other: "event", t: 132 },
         // snip
       ]
     }
     
 ### Options
 
+* `debug`: print to console events logged and flushed
+* `events`: array of events to log immediately
 * `log_max_interval`: polling interval
-
 * `log_min_size`: smallest number of unsent logged events to send
+* `log_max_size`: threshold of number of unsent logged events to trigger immediately sending
+* `strategy`: either `"ajax"` (send data as JSON via Ajax POST) or
+  `"pixel"` (send data serialized as URL params in GET to tracking pixel)
+* `url`: url of AJAX endpoint or tracking pixel
 
-* `log_max_size`: threshold of number of unsent logged events to
-  trigger immediately sending
+### RUM (real user-monitoring)
 
-* `url`: url of server endpoint
+RUM and `fs.time` is only available in browsers that are `windows.performance.timing`-capable.
 
-### RUM (TODO)
+#### Built-in timing
 
-There are two sources of real user monitoring data:
+If the browser has
+[navigation timing capability](https://developer.mozilla.org/en-US/docs/Navigation_timing),
+flamsteed will automatically collect and send performance data from
+two sources:
 
-    `window.performance.timing`
+* `window.performance.timing`
+* `chrome.loadTimes` (if available) (TODO: blocked by https://code.google.com/p/chromium/issues/detail?id=160547)
 
-    `chrome.loadTimes`
-    
-There are three events that force a flush of RUM data:
+Empty timings (values equal to 0) are not sent. There will be empty
+timings, for example, if the visitor leaves before `onload` has fired.
 
-* "Operational" timings:
+To save space, timings are sent relative to `navigationStart`.
 
-    TTFB (time to first byte received for the main document)a
+#### Custom "business" timing
 
-    StartRender (time to first non empty browser canvas)
+The point at which the page is usuable or ready might not line up exactly within any of the
+built-in timings. For example, you might have a whole bunch of
+components, widgets, or ads lazy-loaded after `domComplete`, but
+you're specifically interested in one of them (e.g. timeline for
+Facebook).
 
-    DocumentReady (time to fully build the dom)
+flamsteed lets you time custom events, relative to the 
+`window.performance.timing.navigationStart` timestamp.
 
-* "Business" timings such as time-to-first-lodging are sent when `onload` fires
+    fs.time({
+        some: "data"
+    });
 
-    OnLoad (time to fully download the last resource defined by the main document)
-
-* Everything we have is sent when `unload` fires
-
-The benefit of this approach is that as much data is sent as possible.
-
-The downside is that, to get the full picture of a page impression,
-the server-side has to associate all the timing information using the `uuid`.
+NB: This is only as
+accurate and precise as the JS clock, which is not always accurate or
+precise. So flamsteed will discard timings that are less than 0, and
+it's advisable that you treat custom timings as benchmarks not true,
+accurate values.
 
 ### Goals
 
@@ -83,7 +102,14 @@ the server-side has to associate all the timing information using the `uuid`.
 * tiny
 * modular
 
-*Wide browser compatibility is not a current goal.*
+*Broad browser compatibility is not a current goal.*
+
+### Compatibility
+
+* FFX 7+
+* Chrome 7+
+* IE 9+
+* Opera 11.6+, Safari 5.x+ (No RUM)
 
 ## Development
 
@@ -97,3 +123,9 @@ One-shot test run:
 Continuous testing:
 
     $ guard
+
+## Related projects
+
+* [boomerang](http://lognormal.github.com/boomerang/doc/)
+* [piwik](http://piwik.org/)
+* [snowplow](snowplowanalytics.com)
