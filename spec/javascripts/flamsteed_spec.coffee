@@ -9,7 +9,7 @@ describe "_FS", ()->
   strategy         = "pixel"
   log_max_interval = "log max interval"
   serializeStub    = [{event: 'header', timestamp: '12345'},{event: 'footer', timestamp: '23456'}]
-  timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456}
+  timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
 
 
   beforeEach ()->
@@ -229,11 +229,17 @@ describe "_FS", ()->
       expect(fs.flush).toHaveBeenCalled()
 
     it "flushes the buffer on domReady", ->
+      domReadyTime = timingStub.domComplete - timingStub.navigationStart
+      domReadyBuffer = new jasmine.Matchers.ObjectContaining({event: "domReady", timestamp: domReadyTime});
       fs._logDomReadyAndFlush()
+      expect(domReadyBuffer.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
 
     it "flushes the buffer on onload", ->
+      onloadTime = timingStub.loadEventEnd - timingStub.navigationStart
+      onloadBuffer = new jasmine.Matchers.ObjectContaining({event: "onload", timestamp: onloadTime});
       fs._logOnLoadAndFlush()
+      expect(onloadBuffer.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
 
 
