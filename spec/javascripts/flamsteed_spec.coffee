@@ -6,6 +6,7 @@ describe "_FS", ()->
 
   data             = {event: "test"}
   url              = "url"
+  uuid             = 123456789
   strategy         = "pixel"
   log_max_interval = "log max interval"
   serializeStub    = [{event: 'header', timestamp: '12345'},{event: 'footer', timestamp: '23456'}]
@@ -15,8 +16,10 @@ describe "_FS", ()->
   beforeEach ()->
     window.performance = {timing: timingStub}
     fs = new window._FS({
-            url: url
-            log_max_interval: log_max_interval
+      url: url
+      log_max_interval: log_max_interval
+      strategy: strategy
+      uuid: uuid
     })
 
   it "has an URL", ()->
@@ -48,26 +51,31 @@ describe "_FS", ()->
 
 
   describe "log", ()->
-    it "checks whether the browser is capable", ()->
+    it "checks whether the browser is capable", ->
       spyOn(fs, "isCapable")
       fs.log()
       expect(fs.isCapable).toHaveBeenCalled()
     
-    describe "when the browser is capable", ()->
+    describe "when the browser is capable", ->
       
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "flushIfFull")
       
-      it "pushes the data onto the buffer", ()->
-        containing = new jasmine.Matchers.ObjectContaining({event: data.event});
+      it "pushes the data onto the buffer", ->
+        containsData = new jasmine.Matchers.ObjectContaining({event: data.event});
         fs.log(data)
         expect(fs.buffer.length).toEqual(1)
-        expect(containing.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
+        expect(containsData.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
 
       it "calls flushIfFull", ()->
         fs.log(data)
         expect(fs.flushIfFull).toHaveBeenCalled()
+
+      it "registers a uuid", ->
+        containsUuid = new jasmine.Matchers.ObjectContaining({uuid: uuid});
+        fs.log(data)
+        expect(containsUuid.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
 
     describe "when the browser is not capable", ()->
 
@@ -230,16 +238,16 @@ describe "_FS", ()->
 
     it "flushes the buffer on domReady", ->
       domReadyTime = timingStub.domComplete - timingStub.navigationStart
-      domReadyBuffer = new jasmine.Matchers.ObjectContaining({event: "domReady", timestamp: domReadyTime});
+      containsDomReady = new jasmine.Matchers.ObjectContaining({event: "domReady", timestamp: domReadyTime});
       fs._logDomReadyAndFlush()
-      expect(domReadyBuffer.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
+      expect(containsDomReady.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
 
     it "flushes the buffer on onload", ->
       onloadTime = timingStub.loadEventEnd - timingStub.navigationStart
-      onloadBuffer = new jasmine.Matchers.ObjectContaining({event: "onload", timestamp: onloadTime});
+      containsOnload = new jasmine.Matchers.ObjectContaining({event: "onload", timestamp: onloadTime});
       fs._logOnLoadAndFlush()
-      expect(onloadBuffer.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
+      expect(containsOnload.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
 
 
