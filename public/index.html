@@ -3,7 +3,7 @@
   <head>
     <title>Test page</title>
     <script type="text/javascript">
-      //myFlam = {buffer: [], log : function(x){this.buffer.push({event: x, timestamp: new Date().getTime()})}};
+      myFlam = {buffer: [], log : function(x){this.buffer.push({event: x})}};
     </script>
   </head>
 
@@ -17,10 +17,11 @@
 
     </script>
 
-
+    <script type="text/javascript" src="../lib/javascripts/lp.js"></script>
     <script type="text/javascript" src="../lib/javascripts/flamsteed.js"></script>
     <script type="text/javascript">
-      var myFlam = new _FS({ debug: true });
+      myFlam.log(window.lp.fsEnhancement)
+      var myFlam = new _FS({ debug: true, events: myFlam.buffer });
     </script>
 
 
