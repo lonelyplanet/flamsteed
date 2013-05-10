@@ -5,9 +5,8 @@ describe "_FS", ()->
   fs   = undefined
 
   data             = {event: "test"}
-  url              = "url"
-  uuid             = 123456789
-  strategy         = "pixel"
+  remoteUrl        = "url"
+  uuid             = {uuid: 123456789}
   log_max_interval = "log max interval"
   serializeStub    = [{event: 'header', timestamp: '12345'},{event: 'footer', timestamp: '23456'}]
   timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
@@ -16,32 +15,29 @@ describe "_FS", ()->
   beforeEach ()->
     window.performance = {timing: timingStub}
     fs = new window._FS({
-      url: url
+      remoteUrl: remoteUrl
       log_max_interval: log_max_interval
-      strategy: strategy
       uuid: uuid
     })
 
-  it "has an URL", ()->
-    expect(fs.url).toEqual("url")
+  it "has a remote URL", ->
+    expect(fs.remoteUrl).toEqual(remoteUrl)
 
-  describe "constructor", ()->
-    beforeEach ()->
+
+  describe "constructor", ->
+    beforeEach ->
       spyOn(fs, "emptyBuffer")
       spyOn(fs, "resetTimer")
-      spyOn(fs, "_initRum")
+      spyOn(fs, "isCapable").andReturn(true)
+      spyOn(fs, "log")
 
-    it "empties the message buffer", ()->
+    it "empties the message buffer", ->
       fs.constructor()
       expect(fs.emptyBuffer).toHaveBeenCalled()
 
-    it "starts the timer", ()->
+    it "starts the timer", ->
       fs.constructor()
       expect(fs.resetTimer).toHaveBeenCalled()
-
-    it "starts the rum module", ()->
-      fs.constructor()
-      expect(fs._initRum).toHaveBeenCalled()
 
 
   describe "serialize", ->
@@ -60,7 +56,7 @@ describe "_FS", ()->
       
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
-        spyOn(fs, "flushIfFull")
+        spyOn(fs, "_flushIfFull")
       
       it "pushes the data onto the buffer", ->
         containsData = new jasmine.Matchers.ObjectContaining({event: data.event});
@@ -68,30 +64,27 @@ describe "_FS", ()->
         expect(fs.buffer.length).toEqual(1)
         expect(containsData.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
 
-      it "calls flushIfFull", ()->
+      it "calls _flushIfFull", ()->
         fs.log(data)
-        expect(fs.flushIfFull).toHaveBeenCalled()
+        expect(fs._flushIfFull).toHaveBeenCalled()
 
-      it "registers a uuid", ->
-        containsUuid = new jasmine.Matchers.ObjectContaining({uuid: uuid});
-        fs.log(data)
-        expect(containsUuid.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
 
     describe "when the browser is not capable", ()->
 
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(false)
-        spyOn(fs, "flushIfFull")
+        spyOn(fs, "_flushIfFull")
 
       it "does not push data onto the buffer", ()->
         fs.log(data)
         expect(fs.buffer).toEqual([])
 
-      it "does not call flushIfFull", ()->
+      it "does not call _flushIfFull", ()->
         fs.log()
-        expect(fs.flushIfFull).not.toHaveBeenCalled()
-                          
-  describe "flushIfFull", ()->
+        expect(fs._flushIfFull).not.toHaveBeenCalled()
+
+
+  describe "_flushIfFull", ()->
     beforeEach ()->
       spyOn(fs, "flush")
       fs.buffer = [data]
@@ -101,7 +94,7 @@ describe "_FS", ()->
         fs.log_max_size = fs.buffer.length
 
       it "flushes the buffer", ()->
-        fs.flushIfFull()
+        fs._flushIfFull()
         expect(fs.flush).toHaveBeenCalled()
 
     describe "when the buffer is less than log_max_size", ()->
@@ -109,8 +102,9 @@ describe "_FS", ()->
               fs.log_max_size = fs.buffer.length + 1
 
       it "flushes the buffer", ()->
-              fs.flushIfFull()
+              fs._flushIfFull()
               expect(fs.flush).not.toHaveBeenCalled()
+
 
   describe "flushIfEnough", ()->
     beforeEach ()->
@@ -122,7 +116,7 @@ describe "_FS", ()->
         fs.log_min_size = fs.buffer.length
 
       it "flushes the buffer", ()->
-        fs.flushIfEnough()
+        fs._flushIfEnough()
         expect(fs.flush).toHaveBeenCalled()
 
     describe "when the buffer is less than log_min_size", ()->
@@ -130,8 +124,9 @@ describe "_FS", ()->
         fs.log_min_size = fs.buffer.length + 1
 
       it "flushes the buffer", ()->
-        fs.flushIfEnough()
+        fs._flushIfEnough()
         expect(fs.flush).not.toHaveBeenCalled()
+
 
   describe "flush", ()->
     beforeEach ()->
@@ -161,30 +156,27 @@ describe "_FS", ()->
       it "empties the buffer", ()->
         fs.flush()
         expect(fs.emptyBuffer).toHaveBeenCalled()
-                          
-  # describe "sendData", ()->
-    
-  #   beforeEach ()->
-  #     xhr = spyOn(window, "XMLHttpRequest").andReturn(xhr)
-  #     createSpyObj("xhr", ["open", "send"])
-  #     spyOn(xhr, "open")
-  #     spyOn(xhr, "send")
-
-  #   describe "when there is data to send", ()->
-  #     it "sends data as JSON to url and does not wait for response", ()->
-  #       fs._sendData([data])
-  #       expect(xhr.open).toHaveBeenCalledWith("post", url, true)
-  #       expect(xhr.send).toHaveBeenCalledWith(url, JSON.stringify([data]))
-
-  # describe "sendData", ->
-  #   it "creates a 1x1 image ", ->
-  #     image = fs._appendImage([{event: 'data'}])
-  #     expect(image.length).not.toEqual(0)
-  #     expect(image.getAttribute('src')).toContain(url)
-  #     expect(image.getAttribute('src')).toContain("event=data")
 
 
-  describe "resetTimer", ()->
+  describe "sendData", ->
+    it "serializes and creates a 1x1 image ", ->
+      image = fs._appendImage([{event: 'data'}])
+      expect(image.length).not.toEqual(0)
+      expect(image.style.visibility).toBe 'hidden'
+      expect(image.getAttribute('src')).toContain(remoteUrl)
+      expect(image.getAttribute('src')).toContain("event=data")
+
+
+  describe "Tidying up", ->
+    beforeEach ->
+      spyOn(fs, '_tidyUp')
+
+    it "tidies after sending the data", ->
+      fs.flush()
+      expect(fs._tidyUp).toHaveBeenCalled()
+
+
+  describe "resetTimer", ->
     timeout  = "timeout"
     interval = "interval"
     bound_start_poll = "bound_start_poll"
@@ -196,7 +188,7 @@ describe "_FS", ()->
       spyOn(window, "clearInterval")
       spyOn(window, "clearTimeout")
       spyOn(window, "setTimeout")
-      spyOn(fs.startPoll, "bind").andReturn(bound_start_poll)
+      spyOn(fs._startPoll, "bind").andReturn(bound_start_poll)
 
     it "clears the interval and timeout", ()->
       fs.resetTimer()
@@ -211,11 +203,11 @@ describe "_FS", ()->
     bound_flush_if_enough = "bound_flush_if_enough"
           
     beforeEach ()->
-      spyOn(fs.flushIfEnough, "bind").andReturn(bound_flush_if_enough)
+      spyOn(fs._flushIfEnough, "bind").andReturn(bound_flush_if_enough)
       spyOn(window, "setInterval")
 
     it "starts polling flushIfEnough", ()->
-      fs.startPoll()
+      fs._startPoll()
       expect(window.setInterval).toHaveBeenCalledWith(bound_flush_if_enough, log_max_interval)
 
   describe "emptyBuffer", ()->
@@ -231,25 +223,8 @@ describe "_FS", ()->
     beforeEach ()->
       spyOn(fs, "flush")
 
-    it "empties the buffer on init", ->
-      fs._initRum()
-      expect(fs.buffer.length).toEqual(2)
+    it "flushes the buffer on unload", ->
+      containsPerf = new jasmine.Matchers.ObjectContaining({domComplete: timingStub.domComplete - timingStub.navigationStart});
+      fs._logRumAndFlush()
+      expect(containsPerf.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
-
-    it "flushes the buffer on domReady", ->
-      domReadyTime = timingStub.domComplete - timingStub.navigationStart
-      containsDomReady = new jasmine.Matchers.ObjectContaining({event: "domReady", timestamp: domReadyTime});
-      fs._logDomReadyAndFlush()
-      expect(containsDomReady.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
-      expect(fs.flush).toHaveBeenCalled()
-
-    it "flushes the buffer on onload", ->
-      onloadTime = timingStub.loadEventEnd - timingStub.navigationStart
-      containsOnload = new jasmine.Matchers.ObjectContaining({event: "onload", timestamp: onloadTime});
-      fs._logOnLoadAndFlush()
-      expect(containsOnload.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
-      expect(fs.flush).toHaveBeenCalled()
-
-
-
-
