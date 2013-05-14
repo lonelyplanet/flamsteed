@@ -1,30 +1,40 @@
-* flamsteed.js
-** instantiate but blackhole everything if not capable
-** reuse timeout binding (efficiency)
-** force flush on unload
-** shorten RUM keys, values (relative to t0)
-** LP convention wrapper: event structure, naming, variants, deployment etc.
-* LP client side enrichment
-** lp cookie, lp session cookie
-*** username
-*** session id
-** variant
-** resolution/viewport/docsize
-** bandwidth
-** latency
-** timezone
-** referrer
-** event
-** LP flamsteed version
-** Browser uid??
-* LP deployment
+# flamsteed.js
+
+
+# TODO
+
+## Specs
+- Add specs around seedEvents
+- Add specs around schema and build sha
+
+## Refactor
+
+- Make _serialize produce array of arrays
+- Swap guard for grunt and remove bundler dependency
+
+
+
+
+## LP client side enrichment
+- lp cookie, lp session cookie - which session cookie?
+- session id
+
+## Possible/reliable?
+- bandwidth ??
+- latency ??
+
+## From headers?
+- referrer?
+- browser
+
+## LP deployment
 ** environment!
-* server side ETL enrichments
+
+## server side ETL enrichments
 ** GeoIP
 ** user agent
 ** timestamp
 ** uuid
 ** blackhole bots
-
 
 
