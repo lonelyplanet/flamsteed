@@ -12,13 +12,12 @@ RUM is built-in.
     
     // log something happened
     fs.log({
-        some: "data"
+        d: "data"
     });
     
-    // log something happened and 
-    // (roughly) when it happened
+    // log something happened and when it happened
     fs.time({
-        other: "event"
+        d: "event"
     });
     
 flamsteed buffers logged events. The buffer is only flushed back to the

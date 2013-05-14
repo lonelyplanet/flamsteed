@@ -4,11 +4,11 @@ spec_helper.setupWindow()
 describe "_FS", ()->
   fs   = undefined
 
-  data             = {event: "test"}
+  data             = {e: "test"}
   remoteUrl        = "url"
   uuid             = {uuid: 123456789}
   log_max_interval = "log max interval"
-  serializeStub    = [{event: 'header', timestamp: '12345'},{event: 'footer', timestamp: '23456'}]
+  serializeStub    = [{e: 'header', t: '12345'},{e: 'footer', t: '23456'}]
   timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
 
 
@@ -43,7 +43,7 @@ describe "_FS", ()->
   describe "serialize", ->
     it "serializes an array of objects", ->
       output = fs._serialize(serializeStub)
-      expect(output).toEqual('event=header&timestamp=12345&event=footer&timestamp=23456')
+      expect(output).toEqual('e=header&t=12345&e=footer&t=23456')
 
 
   describe "log", ()->
@@ -59,7 +59,7 @@ describe "_FS", ()->
         spyOn(fs, "_flushIfFull")
       
       it "pushes the data onto the buffer", ->
-        containsData = new jasmine.Matchers.ObjectContaining({event: data.event});
+        containsData = new jasmine.Matchers.ObjectContaining({e: data.e});
         fs.log(data)
         expect(fs.buffer.length).toEqual(1)
         expect(containsData.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
@@ -67,7 +67,6 @@ describe "_FS", ()->
       it "calls _flushIfFull", ()->
         fs.log(data)
         expect(fs._flushIfFull).toHaveBeenCalled()
-
 
     describe "when the browser is not capable", ()->
 
@@ -82,6 +81,37 @@ describe "_FS", ()->
       it "does not call _flushIfFull", ()->
         fs.log()
         expect(fs._flushIfFull).not.toHaveBeenCalled()
+
+
+  describe "time", ()->
+    it "checks whether the browser is capable", ->
+      spyOn(fs, "isNowCapable")
+      fs.time()
+      expect(fs.isNowCapable).toHaveBeenCalled()
+
+    describe "when the browser is capable", ->
+      
+      beforeEach ()->
+        window.performance.now = -> "200"
+        spyOn(fs, "isNowCapable").andReturn(true)
+        spyOn(fs, "log")
+
+      it "logs the data", ->
+        fs.time(data)
+        expect(fs.log).toHaveBeenCalled()
+
+      it "creates a timestamp", ->
+        fs.time(data)
+        expect(fs.log).toHaveBeenCalledWith({e: "test", t: "200"})
+
+    describe "when the browser is not capable", ->
+      beforeEach ()->
+        spyOn(fs, "isNowCapable").andReturn(false)
+        spyOn(fs, "log")
+
+      it "logs the data", ->
+        fs.time(data)
+        expect(fs.log).not.toHaveBeenCalled()
 
 
   describe "_flushIfFull", ()->
@@ -160,11 +190,11 @@ describe "_FS", ()->
 
   describe "sendData", ->
     it "serializes and creates a 1x1 image ", ->
-      image = fs._appendImage([{event: 'data'}])
+      image = fs._appendImage([{e: 'data'}])
       expect(image.length).not.toEqual(0)
       expect(image.style.visibility).toBe 'hidden'
       expect(image.getAttribute('src')).toContain(remoteUrl)
-      expect(image.getAttribute('src')).toContain("event=data")
+      expect(image.getAttribute('src')).toContain("e=data")
 
 
   describe "Tidying up", ->
