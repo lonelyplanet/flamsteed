@@ -13,7 +13,7 @@ helper =
                           global.document = window.document 
                           # must be last as it releases flow control to jasmine
                 })
-
+                
                 beforeEach(() ->
                         waitsFor(() ->
                                 return typeof document isnt "undefined"
