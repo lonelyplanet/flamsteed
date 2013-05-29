@@ -112,8 +112,9 @@ accurate values.
 
 ## Development
 
+First of all, make sure you follow [this guide](http://gruntjs.com/getting-started) and have the grunt cli installed, then:
+
     $ npm install
-    $ bundle
     
 One-shot test run:
 
