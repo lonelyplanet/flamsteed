@@ -1,26 +1,15 @@
-fs    = require('fs')
-jsdom = require('jsdom')
+unless Function::bind
+  Function::bind = (oThis) ->
+    
+    # closest thing possible to the ECMAScript 5 internal IsCallable function
+    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable")  if typeof this isnt "function"
+    aArgs = Array::slice.call(arguments, 1)
+    fToBind = this
+    fNOP = ->
 
-helper =
-        setupWindow: () ->
-                scripts = ['flamsteed']
-        
-                jsdom.env({
-                        html:    '<html><head></head><body></body></html>'
-                        scripts: scripts.map (file) ->  __dirname + '/../../../lib/javascripts/' + file + ".js"
-                        done:    (errors, newWindow) ->
-                          global.window = newWindow
-                          global.document = window.document 
-                          # must be last as it releases flow control to jasmine
-                })
-                
-                beforeEach(() ->
-                        waitsFor(() ->
-                                return typeof document isnt "undefined"
-                        )
-                        runs(() ->
-                                throw new Error("window.document was not set") unless window.document
-                        )
-                )
+    fBound = ->
+      fToBind.apply (if this instanceof fNOP and oThis then this else oThis), aArgs.concat(Array::slice.call(arguments))
 
-module.exports = helper
+    fNOP:: = @::
+    fBound:: = new fNOP()
+    fBound
