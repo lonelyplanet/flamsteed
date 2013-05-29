@@ -1,3 +1,4 @@
+# There's an issue where PhantomJS doesn't have the `bind()` function: https://github.com/ariya/phantomjs/issues/10522
 unless Function::bind
   Function::bind = (oThis) ->
     
