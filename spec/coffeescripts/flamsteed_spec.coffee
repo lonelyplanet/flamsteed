@@ -1,6 +1,3 @@
-spec_helper = require("./support/spec_helper")
-spec_helper.setupWindow()
-
 describe "_FS", ()->
   fs   = undefined
 

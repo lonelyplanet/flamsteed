@@ -8,6 +8,6 @@
     , "coffee-script": "latest"
   },
   "scripts": {
-    "test" : "jasmine-node --forceexit --coffee spec/javascripts"
+    "test" : "jasmine-node --forceexit --coffee spec/coffeescripts"
   }
 }
