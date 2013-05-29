@@ -117,11 +117,11 @@ accurate values.
     
 One-shot test run:
 
-    $ npm test
+    $ grunt
 
 Continuous testing:
 
-    $ guard
+    $ grunt dev
 
 ## Related projects
 
