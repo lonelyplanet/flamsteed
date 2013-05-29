@@ -7,9 +7,6 @@
     , "jsdom": "latest"
     , "coffee-script": "latest"
   },
-  "scripts": {
-    "test" : "jasmine-node --forceexit --coffee spec/coffeescripts"
-  },
   "devDependencies": {
     "grunt": "0.4.1",
     "grunt-contrib-coffee": "0.7.0",
