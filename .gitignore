@@ -1,3 +1,5 @@
 .rvmrc
 node_modules
-
+.grunt
+spec/javascripts/
+_SpecRunner.html
