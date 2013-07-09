@@ -11,7 +11,6 @@
   	".bowerrc",
   	".gitignore",
   	"Gruntfile.js",
-  	"README.md",
   	"TODO"
   ]
 }
