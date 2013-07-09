@@ -1,5 +1,4 @@
 {
-
     "name": "flamsteed", 
     "version": "0.0.1", 
     "private": true, 
@@ -12,5 +11,4 @@
       "grunt-contrib-jasmine": "0.4.2",
       "grunt-contrib-watch": "0.4.4"
     }
-
 }

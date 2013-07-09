@@ -1,8 +1,7 @@
 {
   "name": "flamsteed",
   "version": "0.1",
-  "main": "./lib/javascripts/flamsteed.js",
-  "dependencies": {},
+  "main": "lib/javascripts/flamsteed.js",
   "ignore": [
   	"grunt-tasks",
   	"node_modules",
