@@ -1,6 +1,6 @@
 {
   "name": "flamsteed",
-  "version": "0.1",
+  "version": "0.0.1",
   "main": "lib/javascripts/flamsteed.js",
   "ignore": [
   	"grunt-tasks",
