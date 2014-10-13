@@ -48,13 +48,13 @@ describe "_FS", ()->
       spyOn(fs, "isCapable")
       fs.log()
       expect(fs.isCapable).toHaveBeenCalled()
-    
+
     describe "when the browser is capable", ->
-      
+
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "_flushIfFull")
-      
+
       it "pushes the data onto the buffer", ->
         containsData = new jasmine.Matchers.ObjectContaining({e: data.e});
         fs.log(data)
@@ -87,7 +87,7 @@ describe "_FS", ()->
       expect(fs.isNowCapable).toHaveBeenCalled()
 
     describe "when the browser is capable", ->
-      
+
       beforeEach ()->
         window.performance.now = -> "200"
         spyOn(fs, "isNowCapable").andReturn(true)
@@ -174,7 +174,7 @@ describe "_FS", ()->
       it "resets the timer", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
-      
+
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer
         fs.flush()
@@ -207,7 +207,7 @@ describe "_FS", ()->
     timeout  = "timeout"
     interval = "interval"
     bound_start_poll = "bound_start_poll"
-    
+
     beforeEach ()->
       fs.timeout          = timeout
       fs.interval         = interval
@@ -228,7 +228,7 @@ describe "_FS", ()->
 
   describe "startPoll", ()->
     bound_flush_if_enough = "bound_flush_if_enough"
-          
+
     beforeEach ()->
       spyOn(fs._flushIfEnough, "bind").andReturn(bound_flush_if_enough)
       spyOn(window, "setInterval")
