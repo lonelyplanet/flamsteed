@@ -28,22 +28,29 @@ server (and logged events are sent) when:
 * `unload` event is triggered when the visitor navigates away from
   the page
 
-When flamsteed first initializes, it generates `u` and `uuid` attributes.
+When flamsteed first initializes, it generates `session_id` and `fid` attributes.
 These are sent back with every bunch of events, so it can be used to identify
 all the events associated with a particular page impression.
 
 These can be set on `new _FS`, e.g:
 
     var fs = new _FS({
-      u:    123,
-      uuid: 321
+      session_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
+      page_impression_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346"
+    });
+
+or;
+
+    var fs = new _FS({
+      u: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
+      fid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346"
     });
 
 Each payload flushed back to the server looks like this:
 
     {
-      uuid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346",
-      u: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
+      fid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346",
+      session_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
       t: 1354880453288,
       d: [
         { some: "data" },
@@ -62,6 +69,8 @@ Each payload flushed back to the server looks like this:
 * `strategy`: either `"ajax"` (send data as JSON via Ajax POST) or
   `"pixel"` (send data serialized as URL params in GET to tracking pixel)
 * `url`: url of AJAX endpoint or tracking pixel
+* `session_id` | `u` (Optional, but recommended) - Unique identifier for the context user or session
+* `page_impression_id` | `fid` (Optional) - Unique identifier for the Flamsteed page impression instance
 
 ### RUM (real user-monitoring)
 

@@ -3,47 +3,54 @@ describe "_FS", ()->
 
   data             = {e: "test"}
   remoteUrl        = "url"
-  user             = 987654321
-  uuid             = 123456789
+  session_id       = 987654321
+  fid              = 123456789
   log_max_interval = "log max interval"
   serializeStub    = [{e: 'header', t: '12345'},{e: 'footer', t: '23456'}]
   timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
-
 
   beforeEach ()->
     window.performance = {timing: timingStub}
     fs = new window._FS({
       remoteUrl: remoteUrl,
       log_max_interval: log_max_interval,
-      u: user,
-      uuid: uuid
+      session_id: session_id,
+      fid: fid
     })
 
   it "has a remote URL", ->
     expect(fs.remoteUrl).toEqual(remoteUrl)
 
-  describe "u option", ->
-    it "accepts value", ->
-      expect(fs.u).toEqual(user)
+  describe "session_id attribute", ->
+    it "supports u option", ->
+      fs = new window._FS({ u: session_id })
+      expect(fs.session_id).toEqual(session_id)
+
+    it "supports session_id option", ->
+      expect(fs.session_id).toEqual(session_id)
 
     it "defaults value", ->
       fs = new window._FS()
-      expect(fs.u).not.toBe(null)
+      expect(fs.session_id).not.toBe(null)
 
-  describe "uuid option", ->
-    it "accepts value", ->
-      expect(fs.uuid).toEqual(uuid)
+  describe "fid attribute", ->
+    it "supports fid option", ->
+      expect(fs.fid).toEqual(fid)
+
+    it "supports page_impression_id option", ->
+      fs = new window._FS({ page_impression_id: fid })
+      expect(fs.fid).toEqual(fid)
 
     describe "default value", ->
       beforeEach ()->
         spyOn(Date, "now").andReturn(123)
-        fs = new window._FS({ u: user })
+        fs = new window._FS({ session_id: session_id })
 
-      it "utilises u value", ->
-        expect(fs.uuid.split('-')[0]).toEqual(user.toString())
+      it "utilises session_id value", ->
+        expect(fs.fid.split('-')[0]).toEqual(session_id.toString())
 
       it "utilises Date", ->
-        expect(fs.uuid.split('-')[1]).toEqual(123.toString())
+        expect(fs.fid.split('-')[1]).toEqual(123.toString())
 
 
   describe "constructor", ->
@@ -151,11 +158,11 @@ describe "_FS", ()->
 
     describe "when the buffer is less than log_max_size", ()->
       beforeEach ()->
-              fs.log_max_size = fs.buffer.length + 1
+        fs.log_max_size = fs.buffer.length + 1
 
       it "flushes the buffer", ()->
-              fs._flushIfFull()
-              expect(fs.flush).not.toHaveBeenCalled()
+        fs._flushIfFull()
+        expect(fs.flush).not.toHaveBeenCalled()
 
 
   describe "flushIfEnough", ()->
@@ -201,13 +208,13 @@ describe "_FS", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
 
-      it "pushes user to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ u: user });
+      it "pushes session_id to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
         fs.flush()
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
-      it "pushes uuid to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ uuid: uuid });
+      it "pushes fid to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
         fs.flush()
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
