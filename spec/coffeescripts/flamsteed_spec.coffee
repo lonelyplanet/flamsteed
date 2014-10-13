@@ -3,7 +3,8 @@ describe "_FS", ()->
 
   data             = {e: "test"}
   remoteUrl        = "url"
-  uuid             = {uuid: 123456789}
+  user             = 987654321
+  uuid             = 123456789
   log_max_interval = "log max interval"
   serializeStub    = [{e: 'header', t: '12345'},{e: 'footer', t: '23456'}]
   timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
@@ -12,13 +13,37 @@ describe "_FS", ()->
   beforeEach ()->
     window.performance = {timing: timingStub}
     fs = new window._FS({
-      remoteUrl: remoteUrl
-      log_max_interval: log_max_interval
+      remoteUrl: remoteUrl,
+      log_max_interval: log_max_interval,
+      u: user,
       uuid: uuid
     })
 
   it "has a remote URL", ->
     expect(fs.remoteUrl).toEqual(remoteUrl)
+
+  describe "u option", ->
+    it "accepts value", ->
+      expect(fs.u).toEqual(user)
+
+    it "defaults value", ->
+      fs = new window._FS()
+      expect(fs.u).not.toBe(null)
+
+  describe "uuid option", ->
+    it "accepts value", ->
+      expect(fs.uuid).toEqual(uuid)
+
+    describe "default value", ->
+      beforeEach ()->
+        spyOn(Date, "now").andReturn(123)
+        fs = new window._FS({ u: user })
+
+      it "utilises u value", ->
+        expect(fs.uuid.split('-')[0]).toEqual(user.toString())
+
+      it "utilises Date", ->
+        expect(fs.uuid.split('-')[1]).toEqual(123.toString())
 
 
   describe "constructor", ->
@@ -158,6 +183,7 @@ describe "_FS", ()->
   describe "flush", ()->
     beforeEach ()->
       fs.buffer = [data]
+      spyOn(fs.buffer, "push")
       spyOn(fs, "resetTimer")
       spyOn(fs, "_sendData")
       spyOn(fs, "emptyBuffer")
@@ -174,6 +200,16 @@ describe "_FS", ()->
       it "resets the timer", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
+
+      it "pushes user to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ u: user });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes uuid to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ uuid: uuid });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer

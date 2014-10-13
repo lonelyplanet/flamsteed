@@ -7,19 +7,19 @@ RUM is built-in.
 
     // setup
     var fs = new _FS({
-      url: "http://f.example.com"  
+      url: "http://f.example.com"
     });
-    
+
     // log something happened
     fs.log({
         d: "data"
     });
-    
+
     // log something happened and when it happened
     fs.time({
         d: "event"
     });
-    
+
 flamsteed buffers logged events. The buffer is only flushed back to the
 server (and logged events are sent) when:
 
@@ -28,14 +28,22 @@ server (and logged events are sent) when:
 * `unload` event is triggered when the visitor navigates away from
   the page
 
-When flamsteed first initializes, it generates a `uuid`. The `uuid` is
-sent back with every bunch of events, so it can be used to identify
+When flamsteed first initializes, it generates `u` and `uuid` attributes.
+These are sent back with every bunch of events, so it can be used to identify
 all the events associated with a particular page impression.
+
+These can be set on `new _FS`, e.g:
+
+    var fs = new _FS({
+      u:    123,
+      uuid: 321
+    });
 
 Each payload flushed back to the server looks like this:
 
     {
-      u: "b57deb09-c6f5-4e0b-99a9-e0618d3b5711",
+      uuid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346",
+      u: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
       t: 1354880453288,
       d: [
         { some: "data" },
@@ -43,7 +51,7 @@ Each payload flushed back to the server looks like this:
         // snip
       ]
     }
-    
+
 ### Options
 
 * `debug`: print to console events logged and flushed
@@ -82,7 +90,7 @@ components, widgets, or ads lazy-loaded after `domComplete`, but
 you're specifically interested in one of them (e.g. timeline for
 Facebook).
 
-flamsteed lets you time custom events, relative to the 
+flamsteed lets you time custom events, relative to the
 `window.performance.timing.navigationStart` timestamp.
 
     fs.time({
@@ -115,7 +123,7 @@ accurate values.
 First of all, make sure you follow [this guide](http://gruntjs.com/getting-started) and have the grunt cli installed, then:
 
     $ npm install
-    
+
 One-shot test run:
 
     $ grunt
