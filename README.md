@@ -39,8 +39,6 @@ These can be set on `new _FS`, e.g:
       page_impression_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346"
     });
 
-or;
-
     var fs = new _FS({
       u: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
       fid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346"
@@ -58,6 +56,17 @@ Each payload flushed back to the server looks like this:
         // snip
       ]
     }
+
+Given the following example:
+
+    var fs = new _FS({
+      session_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG"
+    });
+
+The `fid` generated would be the `session_id` and [`Date.now()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) delimited with `-`
+
+    console.log(fs.fid)
+    "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413223038373"
 
 ### Options
 
