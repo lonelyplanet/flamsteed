@@ -52,6 +52,15 @@ describe "_FS", ()->
       it "utilises Date", ->
         expect(fs.fid.split('-')[1]).toEqual(123.toString())
 
+  describe "session_id attribute", ->
+    it "supports schema option", ->
+      fs = new window._FS({ schema: "0.3" })
+      expect(fs.schema).toEqual("0.3")
+
+    it "defaults value", ->
+      fs = new window._FS()
+      expect(fs.schema).toEqual("0.1")
+
 
   describe "constructor", ->
     beforeEach ->
@@ -215,6 +224,11 @@ describe "_FS", ()->
 
       it "pushes fid to the buffer", ()->
         containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes schema to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
         fs.flush()
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 

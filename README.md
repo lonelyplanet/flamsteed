@@ -49,6 +49,7 @@ Each payload flushed back to the server looks like this:
     {
       fid: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413212917346",
       session_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG",
+      schema: "0.1",
       t: 1354880453288,
       d: [
         { some: "data" },
@@ -63,9 +64,8 @@ Given the following example:
       session_id: "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG"
     });
 
-The `fid` generated would be the `session_id` and [`Date.now()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) delimited with `-`
+The `fid` generated would be the `session_id` and [`Date.now()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) delimited with `-`, e.g:
 
-    console.log(fs.fid)
     "rZeDeb14LcKdWcqLA9AnBzs4Nmms5bWG-1413223038373"
 
 ### Options
@@ -80,6 +80,7 @@ The `fid` generated would be the `session_id` and [`Date.now()`](https://develop
 * `url`: url of AJAX endpoint or tracking pixel
 * `session_id` | `u` (Optional, but recommended) - Unique identifier for the context user or session
 * `page_impression_id` | `fid` (Optional) - Unique identifier for the Flamsteed page impression instance
+* `schema` - Schema version to append to each event
 
 ### RUM (real user-monitoring)
 
