@@ -3,22 +3,85 @@ describe "_FS", ()->
 
   data             = {e: "test"}
   remoteUrl        = "url"
-  uuid             = {uuid: 123456789}
+  session_id       = 987654321
+  fid              = 123456789
   log_max_interval = "log max interval"
   serializeStub    = [{e: 'header', t: '12345'},{e: 'footer', t: '23456'}]
-  timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
+  timingStub       = {
+    connectEnd: 1413220481973,
+    connectStart: 1413220481960,
+    domComplete: 1413220485058,
+    domContentLoadedEventEnd: 1413220483270,
+    domContentLoadedEventStart: 1413220483268,
+    domInteractive: 1413220483268,
+    domLoading: 1413220482230,
+    domainLookupEnd: 1413220481960,
+    domainLookupStart: 1413220481949,
+    fetchStart: 1413220481947,
+    loadEventEnd: 1413220485102,
+    loadEventStart: 1413220485058,
+    navigationStart: 1413220481947,
+    redirectEnd: 0,
+    redirectStart: 0,
+    requestStart: 1413220481973,
+    responseEnd: 1413220482002,
+    responseStart: 1413220481991,
+    secureConnectionStart: 0,
+    unloadEventEnd: 0,
+    unloadEventStart: 0 }
 
 
   beforeEach ()->
-    window.performance = {timing: timingStub}
+    window.performance = { timing: timingStub }
     fs = new window._FS({
-      remoteUrl: remoteUrl
-      log_max_interval: log_max_interval
-      uuid: uuid
+      remoteUrl: remoteUrl,
+      log_max_interval: log_max_interval,
+      session_id: session_id,
+      fid: fid
     })
 
   it "has a remote URL", ->
     expect(fs.remoteUrl).toEqual(remoteUrl)
+
+  describe "session_id attribute", ->
+    it "supports u option", ->
+      fs = new window._FS({ u: session_id })
+      expect(fs.session_id).toEqual(session_id)
+
+    it "supports session_id option", ->
+      expect(fs.session_id).toEqual(session_id)
+
+    it "defaults value", ->
+      fs = new window._FS()
+      expect(fs.session_id).not.toBe(null)
+
+  describe "fid attribute", ->
+    it "supports fid option", ->
+      expect(fs.fid).toEqual(fid)
+
+    it "supports page_impression_id option", ->
+      fs = new window._FS({ page_impression_id: fid })
+      expect(fs.fid).toEqual(fid)
+
+    describe "default value", ->
+      beforeEach ()->
+        spyOn(Date, "now").andReturn(123)
+        fs = new window._FS({ session_id: session_id })
+
+      it "utilises session_id value", ->
+        expect(fs.fid.split('-')[0]).toEqual(session_id.toString())
+
+      it "utilises Date", ->
+        expect(fs.fid.split('-')[1]).toEqual(123.toString())
+
+  describe "session_id attribute", ->
+    it "supports schema option", ->
+      fs = new window._FS({ schema: "0.3" })
+      expect(fs.schema).toEqual("0.3")
+
+    it "defaults value", ->
+      fs = new window._FS()
+      expect(fs.schema).toEqual("0.1")
 
 
   describe "constructor", ->
@@ -42,19 +105,27 @@ describe "_FS", ()->
       output = fs._serialize(serializeStub)
       expect(output).toEqual('e=header&t=12345&e=footer&t=23456')
 
+    it "ensures missing values are nullified", ->
+      output = fs._serialize([{ z: '', y: -1 }])
+      expect(output).toEqual('z=null&y=-1')
+
+    it "ensures spaces are escaped", ->
+      output = fs._serialize([{ z: 'foo bar' }])
+      expect(output).toEqual('z=foo+bar')
+
 
   describe "log", ()->
     it "checks whether the browser is capable", ->
       spyOn(fs, "isCapable")
       fs.log()
       expect(fs.isCapable).toHaveBeenCalled()
-    
+
     describe "when the browser is capable", ->
-      
+
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "_flushIfFull")
-      
+
       it "pushes the data onto the buffer", ->
         containsData = new jasmine.Matchers.ObjectContaining({e: data.e});
         fs.log(data)
@@ -87,7 +158,7 @@ describe "_FS", ()->
       expect(fs.isNowCapable).toHaveBeenCalled()
 
     describe "when the browser is capable", ->
-      
+
       beforeEach ()->
         window.performance.now = -> "200"
         spyOn(fs, "isNowCapable").andReturn(true)
@@ -126,11 +197,11 @@ describe "_FS", ()->
 
     describe "when the buffer is less than log_max_size", ()->
       beforeEach ()->
-              fs.log_max_size = fs.buffer.length + 1
+        fs.log_max_size = fs.buffer.length + 1
 
       it "flushes the buffer", ()->
-              fs._flushIfFull()
-              expect(fs.flush).not.toHaveBeenCalled()
+        fs._flushIfFull()
+        expect(fs.flush).not.toHaveBeenCalled()
 
 
   describe "flushIfEnough", ()->
@@ -158,6 +229,7 @@ describe "_FS", ()->
   describe "flush", ()->
     beforeEach ()->
       fs.buffer = [data]
+      spyOn(fs.buffer, "push")
       spyOn(fs, "resetTimer")
       spyOn(fs, "_sendData")
       spyOn(fs, "emptyBuffer")
@@ -174,7 +246,22 @@ describe "_FS", ()->
       it "resets the timer", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
-      
+
+      it "pushes session_id to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes fid to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes schema to the buffer", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer
         fs.flush()
@@ -207,7 +294,7 @@ describe "_FS", ()->
     timeout  = "timeout"
     interval = "interval"
     bound_start_poll = "bound_start_poll"
-    
+
     beforeEach ()->
       fs.timeout          = timeout
       fs.interval         = interval
@@ -228,7 +315,7 @@ describe "_FS", ()->
 
   describe "startPoll", ()->
     bound_flush_if_enough = "bound_flush_if_enough"
-          
+
     beforeEach ()->
       spyOn(fs._flushIfEnough, "bind").andReturn(bound_flush_if_enough)
       spyOn(window, "setInterval")
@@ -251,7 +338,7 @@ describe "_FS", ()->
       spyOn(fs, "flush")
 
     it "flushes the buffer on unload", ->
-      containsPerf = new jasmine.Matchers.ObjectContaining({domComplete: timingStub.domComplete - timingStub.navigationStart});
+      containsPerf = new jasmine.Matchers.ObjectContaining(timingStub);
       fs._logRumAndFlush()
       expect(containsPerf.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
