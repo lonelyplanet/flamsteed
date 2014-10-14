@@ -7,10 +7,32 @@ describe "_FS", ()->
   fid              = 123456789
   log_max_interval = "log max interval"
   serializeStub    = [{e: 'header', t: '12345'},{e: 'footer', t: '23456'}]
-  timingStub       = {domComplete: 123, loadEventEnd: 234, domLoading: 345, responseStart: 456, navigationStart: 100}
+  timingStub       = {
+    connectEnd: 1413220481973,
+    connectStart: 1413220481960,
+    domComplete: 1413220485058,
+    domContentLoadedEventEnd: 1413220483270,
+    domContentLoadedEventStart: 1413220483268,
+    domInteractive: 1413220483268,
+    domLoading: 1413220482230,
+    domainLookupEnd: 1413220481960,
+    domainLookupStart: 1413220481949,
+    fetchStart: 1413220481947,
+    loadEventEnd: 1413220485102,
+    loadEventStart: 1413220485058,
+    navigationStart: 1413220481947,
+    redirectEnd: 0,
+    redirectStart: 0,
+    requestStart: 1413220481973,
+    responseEnd: 1413220482002,
+    responseStart: 1413220481991,
+    secureConnectionStart: 0,
+    unloadEventEnd: 0,
+    unloadEventStart: 0 }
+
 
   beforeEach ()->
-    window.performance = {timing: timingStub}
+    window.performance = { timing: timingStub }
     fs = new window._FS({
       remoteUrl: remoteUrl,
       log_max_interval: log_max_interval,
@@ -308,7 +330,7 @@ describe "_FS", ()->
       spyOn(fs, "flush")
 
     it "flushes the buffer on unload", ->
-      containsPerf = new jasmine.Matchers.ObjectContaining({domComplete: timingStub.domComplete - timingStub.navigationStart});
+      containsPerf = new jasmine.Matchers.ObjectContaining(timingStub);
       fs._logRumAndFlush()
       expect(containsPerf.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
