@@ -105,6 +105,14 @@ describe "_FS", ()->
       output = fs._serialize(serializeStub)
       expect(output).toEqual('e=header&t=12345&e=footer&t=23456')
 
+    it "ensures missing values are nullified", ->
+      output = fs._serialize([{ z: '', y: -1 }])
+      expect(output).toEqual('z=null&y=-1')
+
+    it "ensures spaces are escaped", ->
+      output = fs._serialize([{ z: 'foo bar' }])
+      expect(output).toEqual('z=foo+bar')
+
 
   describe "log", ()->
     it "checks whether the browser is capable", ->
