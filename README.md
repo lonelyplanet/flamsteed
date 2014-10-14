@@ -96,11 +96,6 @@ two sources:
 * `window.performance.timing`
 * `chrome.loadTimes` (if available) (TODO: blocked by https://code.google.com/p/chromium/issues/detail?id=160547)
 
-Empty timings (values equal to 0) are not sent. There will be empty
-timings, for example, if the visitor leaves before `onload` has fired.
-
-To save space, timings are sent relative to `navigationStart`.
-
 #### Custom "business" timing
 
 The point at which the page is usuable or ready might not line up exactly within any of the
