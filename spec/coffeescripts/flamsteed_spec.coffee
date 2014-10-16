@@ -1,5 +1,5 @@
 describe "_FS", ()->
-  fs   = undefined
+  fs = undefined
 
   data             = {e: "test"}
   remoteUrl        = "url"
@@ -139,16 +139,44 @@ describe "_FS", ()->
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "_flushIfFull")
+        spyOn(fs.buffer, "push")
 
       it "pushes the data onto the buffer", ->
-        containsData = new jasmine.Matchers.ObjectContaining({e: data.e});
+        containsData = new jasmine.Matchers.ObjectContaining({ e: data.e });
         fs.log(data)
-        expect(fs.buffer.length).toEqual(1)
-        expect(containsData.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "calls _flushIfFull", ()->
         fs.log(data)
         expect(fs._flushIfFull).toHaveBeenCalled()
+
+      it "pushes session_id to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes fid to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes schema to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes t to the data", ()->
+        window.performance.now = -> 123
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "skips t assignment when present", ()->
+        new_data = { e: data.e, t: 987 }
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 987 });
+        fs.log(new_data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
 
     describe "when the browser is not capable", ()->
 
@@ -181,10 +209,6 @@ describe "_FS", ()->
       it "logs the data", ->
         fs.time(data)
         expect(fs.log).toHaveBeenCalled()
-
-      it "creates a timestamp", ->
-        fs.time(data)
-        expect(fs.log).toHaveBeenCalledWith({e: "test", t: "200"})
 
     describe "when the browser is not capable", ->
       beforeEach ()->
@@ -242,8 +266,6 @@ describe "_FS", ()->
 
   describe "flush", ()->
     beforeEach ()->
-      fs.buffer = [data]
-      spyOn(fs.buffer, "push")
       spyOn(fs, "resetTimer")
       spyOn(fs, "_sendData")
       spyOn(fs, "emptyBuffer")
@@ -256,31 +278,19 @@ describe "_FS", ()->
         fs.flush()
         expect(fs._sendData).not.toHaveBeenCalled()
 
+    describe "buffer empty", ()->
+
+      it "does not send any data", ()->
+        fs.flush()
+        expect(fs._sendData).not.toHaveBeenCalled()
+
     describe "when not already flushing", ()->
+      beforeEach ()->
+        fs.buffer = [data]
+
       it "resets the timer", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
-
-      it "pushes session_id to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
-
-      it "pushes fid to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
-
-      it "pushes schema to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
-
-      it "pushes t to the buffer", ()->
-        spyOn(Date, "now").andReturn(123)
-        containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer
@@ -302,12 +312,15 @@ describe "_FS", ()->
 
 
   describe "Tidying up", ->
-    beforeEach ->
-      spyOn(fs, '_tidyUp')
 
-    it "tidies after sending the data", ->
-      fs.flush()
-      expect(fs._tidyUp).toHaveBeenCalled()
+    it "tidies when image present", ->
+      fs.image = { parentNode: { removeChild: -> {} } }
+      spyOn(fs.image.parentNode, 'removeChild')
+      expect(fs._tidyUp()).toEqual(true)
+      expect(fs.image.parentNode.removeChild).toHaveBeenCalledWith(fs.image)
+
+    it "skips when image not present", ->
+      expect(fs._tidyUp()).toEqual(false)
 
 
   describe "resetTimer", ->
