@@ -103,15 +103,29 @@ describe "_FS", ()->
   describe "serialize", ->
     it "serializes an array of objects", ->
       output = fs._serialize(serializeStub)
-      expect(output).toEqual('e=header&t=12345&e=footer&t=23456')
+      expect(output).toEqual('[0][e]=header&[0][t]=12345&[1][e]=footer&[1][t]=23456')
 
     it "ensures missing values are nullified", ->
       output = fs._serialize([{ z: '', y: -1 }])
-      expect(output).toEqual('z=null&y=-1')
+      expect(output).toEqual('[0][z]=null&[0][y]=-1')
 
     it "ensures spaces are escaped", ->
       output = fs._serialize([{ z: 'foo bar' }])
-      expect(output).toEqual('z=foo+bar')
+      expect(output).toEqual('[0][z]=foo+bar')
+
+    it "ensures each event is distinct", ->
+      output = fs._serialize([{ x: 'foo', t: 1 }, { y: 'bar', t: 2 }, { z: 'car', t: 3 }])
+      expect(output).toEqual('[0][x]=foo&[0][t]=1&[1][y]=bar&[1][t]=2&[2][z]=car&[2][t]=3')
+
+    it "escapes first level attributes", ()->
+      output = fs._serialize([{ z: 'http://foo.com/test?abv=current' }])
+      expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
+
+    it "escapes function buffer value", ()->
+      fn = ()->
+        return { z: 'http://foo.com/test?abv=current' };
+      output = fs._serialize([fn()])
+      expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
 
 
   describe "log", ()->
@@ -262,6 +276,12 @@ describe "_FS", ()->
         fs.flush()
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
+      it "pushes t to the buffer", ()->
+        spyOn(Date, "now").andReturn(123)
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
+        fs.flush()
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer
         fs.flush()
@@ -278,7 +298,7 @@ describe "_FS", ()->
       expect(image.length).not.toEqual(0)
       expect(image.style.visibility).toBe 'hidden'
       expect(image.getAttribute('src')).toContain(remoteUrl)
-      expect(image.getAttribute('src')).toContain("e=data")
+      expect(image.getAttribute('src')).toContain("[0][e]=data")
 
 
   describe "Tidying up", ->
