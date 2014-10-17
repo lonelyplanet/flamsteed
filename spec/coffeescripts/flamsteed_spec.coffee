@@ -1,5 +1,5 @@
 describe "_FS", ()->
-  fs   = undefined
+  fs = undefined
 
   data             = {e: "test"}
   remoteUrl        = "url"
@@ -103,15 +103,29 @@ describe "_FS", ()->
   describe "serialize", ->
     it "serializes an array of objects", ->
       output = fs._serialize(serializeStub)
-      expect(output).toEqual('e=header&t=12345&e=footer&t=23456')
+      expect(output).toEqual('[0][e]=header&[0][t]=12345&[1][e]=footer&[1][t]=23456')
 
     it "ensures missing values are nullified", ->
       output = fs._serialize([{ z: '', y: -1 }])
-      expect(output).toEqual('z=null&y=-1')
+      expect(output).toEqual('[0][z]=null&[0][y]=-1')
 
     it "ensures spaces are escaped", ->
       output = fs._serialize([{ z: 'foo bar' }])
-      expect(output).toEqual('z=foo+bar')
+      expect(output).toEqual('[0][z]=foo+bar')
+
+    it "ensures each event is distinct", ->
+      output = fs._serialize([{ x: 'foo', t: 1 }, { y: 'bar', t: 2 }, { z: 'car', t: 3 }])
+      expect(output).toEqual('[0][x]=foo&[0][t]=1&[1][y]=bar&[1][t]=2&[2][z]=car&[2][t]=3')
+
+    it "escapes first level attributes", ()->
+      output = fs._serialize([{ z: 'http://foo.com/test?abv=current' }])
+      expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
+
+    it "escapes function buffer value", ()->
+      fn = ()->
+        return { z: 'http://foo.com/test?abv=current' };
+      output = fs._serialize([fn()])
+      expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
 
 
   describe "log", ()->
@@ -125,16 +139,44 @@ describe "_FS", ()->
       beforeEach ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "_flushIfFull")
+        spyOn(fs.buffer, "push")
 
       it "pushes the data onto the buffer", ->
-        containsData = new jasmine.Matchers.ObjectContaining({e: data.e});
+        containsData = new jasmine.Matchers.ObjectContaining({ e: data.e });
         fs.log(data)
-        expect(fs.buffer.length).toEqual(1)
-        expect(containsData.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "calls _flushIfFull", ()->
         fs.log(data)
         expect(fs._flushIfFull).toHaveBeenCalled()
+
+      it "pushes session_id to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes fid to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes schema to the data", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes t to the data", ()->
+        window.performance.now = -> 123
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "skips t assignment when present", ()->
+        new_data = { e: data.e, t: 987 }
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 987 });
+        fs.log(new_data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
 
     describe "when the browser is not capable", ()->
 
@@ -167,10 +209,6 @@ describe "_FS", ()->
       it "logs the data", ->
         fs.time(data)
         expect(fs.log).toHaveBeenCalled()
-
-      it "creates a timestamp", ->
-        fs.time(data)
-        expect(fs.log).toHaveBeenCalledWith({e: "test", t: "200"})
 
     describe "when the browser is not capable", ->
       beforeEach ()->
@@ -228,8 +266,6 @@ describe "_FS", ()->
 
   describe "flush", ()->
     beforeEach ()->
-      fs.buffer = [data]
-      spyOn(fs.buffer, "push")
       spyOn(fs, "resetTimer")
       spyOn(fs, "_sendData")
       spyOn(fs, "emptyBuffer")
@@ -242,25 +278,19 @@ describe "_FS", ()->
         fs.flush()
         expect(fs._sendData).not.toHaveBeenCalled()
 
+    describe "buffer empty", ()->
+
+      it "does not send any data", ()->
+        fs.flush()
+        expect(fs._sendData).not.toHaveBeenCalled()
+
     describe "when not already flushing", ()->
+      beforeEach ()->
+        fs.buffer = [data]
+
       it "resets the timer", ()->
         fs.flush()
         expect(fs.resetTimer).toHaveBeenCalled()
-
-      it "pushes session_id to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ session_id: session_id });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
-
-      it "pushes fid to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ fid: fid });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
-
-      it "pushes schema to the buffer", ()->
-        containsData = new jasmine.Matchers.ObjectContaining({ schema: "0.1" });
-        fs.flush()
-        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "calls sendData with the contents of the buffer", ()->
         contents_of_buffer = fs.buffer
@@ -278,16 +308,19 @@ describe "_FS", ()->
       expect(image.length).not.toEqual(0)
       expect(image.style.visibility).toBe 'hidden'
       expect(image.getAttribute('src')).toContain(remoteUrl)
-      expect(image.getAttribute('src')).toContain("e=data")
+      expect(image.getAttribute('src')).toContain("[0][e]=data")
 
 
   describe "Tidying up", ->
-    beforeEach ->
-      spyOn(fs, '_tidyUp')
 
-    it "tidies after sending the data", ->
-      fs.flush()
-      expect(fs._tidyUp).toHaveBeenCalled()
+    it "tidies when image present", ->
+      fs.image = { parentNode: { removeChild: -> {} } }
+      spyOn(fs.image.parentNode, 'removeChild')
+      expect(fs._tidyUp()).toEqual(true)
+      expect(fs.image.parentNode.removeChild).toHaveBeenCalledWith(fs.image)
+
+    it "skips when image not present", ->
+      expect(fs._tidyUp()).toEqual(false)
 
 
   describe "resetTimer", ->
