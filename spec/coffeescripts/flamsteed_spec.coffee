@@ -140,6 +140,7 @@ describe "_FS", ()->
         spyOn(fs, "isCapable").andReturn(true)
         spyOn(fs, "_flushIfFull")
         spyOn(fs.buffer, "push")
+        spyOn(Date, 'now').andReturn(123)
 
       it "pushes the data onto the buffer", ->
         containsData = new jasmine.Matchers.ObjectContaining({ e: data.e });
@@ -166,8 +167,13 @@ describe "_FS", ()->
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
       it "pushes t to the data", ()->
-        window.performance.now = -> 123
         containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
+        fs.log(data)
+        expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
+
+      it "pushes t to the data when existing value is empty", ()->
+        containsData = new jasmine.Matchers.ObjectContaining({ t: 123 });
+        data.t = ''
         fs.log(data)
         expect(fs.buffer.push).toHaveBeenCalledWith(containsData)
 
@@ -194,30 +200,13 @@ describe "_FS", ()->
 
 
   describe "time", ()->
-    it "checks whether the browser is capable", ->
-      spyOn(fs, "isNowCapable")
-      fs.time()
-      expect(fs.isNowCapable).toHaveBeenCalled()
 
-    describe "when the browser is capable", ->
+    beforeEach ()->
+      spyOn(fs, "log")
 
-      beforeEach ()->
-        window.performance.now = -> "200"
-        spyOn(fs, "isNowCapable").andReturn(true)
-        spyOn(fs, "log")
-
-      it "logs the data", ->
-        fs.time(data)
-        expect(fs.log).toHaveBeenCalled()
-
-    describe "when the browser is not capable", ->
-      beforeEach ()->
-        spyOn(fs, "isNowCapable").andReturn(false)
-        spyOn(fs, "log")
-
-      it "logs the data", ->
-        fs.time(data)
-        expect(fs.log).not.toHaveBeenCalled()
+    it "is an alias for #log", ->
+      fs.time(data)
+      expect(fs.log).toHaveBeenCalledWith(data)
 
 
   describe "_flushIfFull", ()->
