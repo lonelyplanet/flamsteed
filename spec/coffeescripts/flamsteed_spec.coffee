@@ -122,7 +122,7 @@ describe "_FS", ()->
       expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
 
     it "escapes function buffer value", ()->
-      fn = ()->
+      fn = ->
         return { z: 'http://foo.com/test?abv=current' };
       output = fs._serialize([fn()])
       expect(output).toEqual('[0][z]=http%3A%2F%2Ffoo.com%2Ftest%3Fabv%3Dcurrent')
@@ -364,3 +364,24 @@ describe "_FS", ()->
       fs._logRumAndFlush()
       expect(containsPerf.jasmineMatches(fs.buffer[0], [], [])).toBe(true)
       expect(fs.flush).toHaveBeenCalled()
+
+
+  describe "now", ->
+
+    describe "Date.now() unavailable", ->
+
+      beforeEach ->
+        spyOn(Date, "now").andReturn(undefined)
+        spyOn(Date.prototype, "getTime").andReturn(987)
+
+      it "returns epoch", ->
+        expect(fs.now()).toBe(987)
+
+    describe "Date.now() available", ->
+
+      beforeEach ->
+        spyOn(Date, "now").andReturn(123)
+
+      it "returns epoch", ->
+        expect(fs.now()).toEqual(123)
+        expect(Date.now).toHaveBeenCalled()
