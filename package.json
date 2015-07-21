@@ -1,8 +1,8 @@
 {
-    "name": "flamsteed", 
-    "version": "0.0.1", 
-    "private": true, 
-    
+    "name": "flamsteed",
+    "version": "0.0.1",
+    "private": false,
+
     "devDependencies": {
       "grunt": "0.4.1",
       "grunt-contrib-coffee": "0.7.0",
