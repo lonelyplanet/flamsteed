@@ -2,6 +2,7 @@
     "name": "flamsteed",
     "version": "0.0.1",
     "private": false,
+    "main": "lib/javascripts/flamsteed"
 
     "devDependencies": {
       "grunt": "0.4.1",
